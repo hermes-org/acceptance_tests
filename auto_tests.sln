@@ -1,0 +1,23 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30011.22
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "auto_downstream_tests", "downstream_tests\auto_downstream_tests.pyproj", "{2E64520B-95C2-4637-805D-09603F67F181}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2E64520B-95C2-4637-805D-09603F67F181}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2E64520B-95C2-4637-805D-09603F67F181}.Release|Any CPU.ActiveCfg = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {FF2469C0-00B6-452C-9318-2D2A9CB8C0AA}
+	EndGlobalSection
+EndGlobal

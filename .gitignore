@@ -3,3 +3,5 @@
 ################################################################################
 
 /.vs/auto_tests/v16/.suo
+/downstream_tests/logs
+/downstream_tests/__pycache__
