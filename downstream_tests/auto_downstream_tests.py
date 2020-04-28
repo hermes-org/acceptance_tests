@@ -131,7 +131,11 @@ def test_maximum_message_size():
 @test_decorator
 def test_multiple_messages_per_packet():
     with create_upstream_context() as ctxt:
-        pass
+        msg = Message.CheckAlive().to_bytes()
+        msg = msg + Message.ServiceDescription("DownstreamId", 1).to_bytes()
+        msg = msg + Message.CheckAlive().to_bytes()
+        ctxt.send(msg)
+        ctxt.expect_message("ServiceDescription")        
 
 def main():
     with create_log("AutomaticDownstream") as log:
