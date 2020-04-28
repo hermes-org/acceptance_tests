@@ -137,8 +137,31 @@ def test_multiple_messages_per_packet():
         ctxt.send(msg)
         ctxt.expect_message("ServiceDescription")        
 
+
+@test_decorator
+def test_wrong_messages():
+    with create_upstream_context() as ctxt:
+        # this test can send loads of messages and combinations which are not expected or not valid in current context
+        # todo: write ech step to log to easily find the position where something went wrong
+
+        msg=b"<Hermes Timestamp='2020-04-28T10:01:20.768'><ThisIsNotAKnownMessage /></Hermes>"
+        ctxt.send(msg)
+        ctxt.expect_message("Notification")        
+
+        msg = Message.RevokeBoardAvailable().to_bytes()
+        ctxt.send(msg)
+        ctxt.expect_message("Notification")        
+        
+        msg = Message.RevokeMachineReady().to_bytes()
+        ctxt.send(msg)
+        ctxt.expect_message("Notification")        
+
+
 def main():
+    global g_log
+
     with create_log("AutomaticDownstream") as log:
+
         working=True
         while (working):
            i=1
