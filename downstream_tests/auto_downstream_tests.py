@@ -4,13 +4,16 @@ from messages import Message
 from contextlib import contextmanager
 
 from connections import UpstreamConnection
-from test_log import create_log, TestLog
+from test_log import create_log, write_log, TestLog
+
+#set the real IP and port number of your device here
+globalHost='127.0.0.1'
+globalPort=50101
 
 MAXMESSAGE = 65536
 TEST_CASES = []
-globalHost='127.0.0.1'
-globalPort=50101
 testFailed=False
+log=0
 
 @contextmanager
 def create_upstream_context(host= globalHost, port = globalPort):
@@ -140,28 +143,30 @@ def test_multiple_messages_per_packet():
 
 @test_decorator
 def test_wrong_messages():
+    global log;
     with create_upstream_context() as ctxt:
         # this test can send loads of messages and combinations which are not expected or not valid in current context
         # todo: write ech step to log to easily find the position where something went wrong
 
+        write_log(log,"Send unknown message")
         msg=b"<Hermes Timestamp='2020-04-28T10:01:20.768'><ThisIsNotAKnownMessage /></Hermes>"
         ctxt.send(msg)
         ctxt.expect_message("Notification")        
 
+        write_log(log,"Send premature RevokeBoardAvailable")
         msg = Message.RevokeBoardAvailable().to_bytes()
         ctxt.send(msg)
         ctxt.expect_message("Notification")        
         
+        write_log(log,"Send premature RevokeMachineReady")
         msg = Message.RevokeMachineReady().to_bytes()
         ctxt.send(msg)
         ctxt.expect_message("Notification")        
 
 
 def main():
-    global g_log
-
+    global log
     with create_log("AutomaticDownstream") as log:
-
         working=True
         while (working):
            i=1

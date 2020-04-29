@@ -69,6 +69,16 @@ class TestLog:
             self._log(FinishEntry())
             self._file.close()
 
+    def write(self, msg):
+        entry=SentEntry();
+        entry.msg=msg;
+        if (self._file is not None) & (not self._file.closed):
+            try:
+                self._file.write(json.dumps(asdict(entry)))
+                self._file.write('\n')
+            except Exception as ex:
+                sys.stderr.write(f'Failed to append <{msg}> to log file {self._file_name}\n')
+
     def log_sent(self, msg):
         self._log(SentEntry(msg = msg))
 
@@ -84,6 +94,9 @@ class TestLog:
             self._file.write('\n')
         except Exception as ex:
             sys.stderr.write(f'Failed to append <{entry}> to log file {self._file_name}\n')
+
+def write_log(log,msg):
+    log.write(msg)
 
 @contextmanager
 def create_log(name):
