@@ -96,6 +96,7 @@ class TestLog:
             sys.stderr.write(f'Failed to append <{entry}> to log file {self._file_name}\n')
 
 def write_log(log,msg):
+    print(msg)
     log.write(msg)
 
 @contextmanager

@@ -40,20 +40,20 @@ def create_upstream_context_with_hand_shake(host = "localhost", port = 50101):
         raise
     
 def test_decorator(func):
-    global testFailed;
+    global testFailed,log;
     def test_wrapper(mode, count):
         if (mode==1):
             print(f"{count} - {func.__name__}")
         else:
             timestamp = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%M')
-            print(f"{timestamp} Executing {func.__name__}...", end = "")
+            write_log(log,f"{timestamp} Executing {func.__name__}...")
             try:
                 func()
             except Exception as e:
                 testFailed=True
-                print(f"FAILED with error: {str(e)}")
+                write_log(log,f"FAILED with error: {str(e)}")
             else:
-                print(f"succeeded")
+                write_log(log,"succeeded")
 
     TEST_CASES.append(test_wrapper)
         
@@ -186,7 +186,7 @@ def main():
                  working=False
 
     if (testFailed==True):
-        print("Test run FAILED!")
+        write_log(log,"Test run FAILED!")
 
 if __name__ == '__main__':
     main()
