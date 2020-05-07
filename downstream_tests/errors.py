@@ -8,11 +8,9 @@ class TestError(Exception):
 
 class ConnectError(TestError):
     """Failure to connect to socket"""
-    pass
 
-class TimeoutError(TestError):
+class TestTimeoutError(TestError):
     """Failure to receive excpected response in time"""
-    pass
 
 class StateMachineError(TestError):
     """Hermes state machine was violated"""
@@ -21,11 +19,9 @@ class StateMachineError(TestError):
 
 class XmlError(TestError):
     """Message contained invalid XML"""
-    pass
 
 class AssertError(TestError):
     """Test assertion failed"""
-    pass
 
 
 
