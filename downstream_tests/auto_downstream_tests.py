@@ -146,7 +146,7 @@ def test_wrong_messages():
     global log;
     with create_upstream_context() as ctxt:
         # this test can send loads of messages and combinations which are not expected or not valid in current context
-        # todo: write ech step to log to easily find the position where something went wrong
+        # todo: write each step to log to easily find the position where something went wrong
 
         write_log(log,"Send unknown message")
         msg=b"<Hermes Timestamp='2020-04-28T10:01:20.768'><ThisIsNotAKnownMessage /></Hermes>"
