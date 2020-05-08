@@ -4,6 +4,7 @@ import socket
 import xml.etree.ElementTree as ET
 
 from messages import Message
+from state_machine import UpstreamStateMachine
 
 TIMEOUT = 1.0
 BUFFERSIZE = 4096
@@ -11,10 +12,12 @@ ENDTAG = b"</Hermes>"
 
 class UpstreamConnection:
 
-    def __init__(self):
-        self._messages = []
+    def __init__(self, test_log):
+        self._deque = collections.deque()
+        self._test_log = test_log
+        self._pending_bytes = b''
         self._socket = None
-        
+        self._state_machine = None
 
     def connect(self, host, port):
         s = None
@@ -42,28 +45,33 @@ class UpstreamConnection:
                 raise socket.error(f"Unable to resolve {host}{port}")
             raise exc
 
-        self._deque = collections.deque()
-        self._bytes = b''
+        self._state_machine = UpstreamStateMachine(self._test_log)
         self._socket = s
 
-    def send(self, data):
-        return self._socket.send(data)
+    def send_msg(self, msg):
+        self._state_machine.on_send_tag(msg.tag)
+        return self._socket.send(msg.to_bytes())
+
+    def send_tag_and_bytes(self, tag, msg_bytes):
+        self._state_machine.on_send_tag(tag)
+        return self._socket.send(msg_bytes)
 
     def __get_next_message(self):
         while True:
             received = self._socket.recv(BUFFERSIZE)
             if not received:
                 return False
-            self._bytes += received
+            self._pending_bytes += received
 
             while True:
-                index = self._bytes.find(ENDTAG)
+                index = self._pending_bytes.find(ENDTAG)
                 if index == -1:
                     break
                 splitat = index + len(ENDTAG)
-                msg, self._bytes = self._bytes[:splitat], self._bytes[splitat:0]
-                root = ET.fromstring(msg)
-                self._deque.append(Message(root))
+                msg_bytes, self._pending_bytes = self._pending_bytes[:splitat], self._pending_bytes[splitat:0]
+                msg = Message(ET.fromstring(msg_bytes))
+                self._state_machine.on_recv(msg)
+                self._deque.append(msg)
 
             if len(self._deque):
                 return True

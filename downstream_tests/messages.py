@@ -1,6 +1,23 @@
-import uuid
 import xml.etree.ElementTree as ET
 from datetime import datetime
+
+UNKNOWN = "Unknown"
+CHECK_ALIVE = "CheckAlive"
+SERVICE_DESCRIPTION = "ServiceDescription"
+NOTIFICATION = "Notification"
+BOARD_AVAILABLE = "BoardAvailable"
+REVOKE_BOARD_AVAILABLE = "RevokeBoardAvailable"
+MACHINE_READY = "MachineReady"
+REVOKE_MACHINE_READY = "RevokeMachineReady"
+START_TRANSPORT = "TransportReady"
+STOP_TRANSPORT = "StopTransport"
+TRANSPORT_FINISHED = "TransportFinished"
+BOARD_FORECAST = "BoardForecast"
+QUERY_BOARD_INFO = "QuerayBoardInfo"
+SEND_BOARD_INFO = "SendBoardInfo"
+SET_CONFIGURATION = "SetConfiguration"
+GET_CONFIGURATION = "GetConfiguration"
+CURRENT_CONFIGURATION = "CurrentConfiguration"
 
 CHECK_ALIVE_PING = 1
 CHECK_ALIVE_PONG = 2
@@ -101,11 +118,11 @@ class Message:
     
     @classmethod
     def CheckAlive(cls, 
-                   type = None, 
-                   id = None):
+                   checkalive_type = None, 
+                   checkalive_id = None):
         self = cls(None, "CheckAlive")
-        self.__set("Type", type)
-        self.__set("Id", id)
+        self.set("Type", checkalive_type)
+        self.set("Id", checkalive_id)
         return self
 
     @classmethod
@@ -114,23 +131,24 @@ class Message:
                            lane_id, 
                            interface_id = None, 
                            version = "1.2", 
-                           supported_features = []):        
+                           supported_features = None):        
         self = cls(None, "ServiceDescription")
-        self.__set("MachineId", machine_id)
-        self.__set("LaneId", lane_id)
-        self.__set("Version", version)
-        self.__set("InterfaceId", interface_id)
+        self.set("MachineId", machine_id)
+        self.set("LaneId", lane_id)
+        self.set("Version", version)
+        self.set("InterfaceId", interface_id)
         supported = ET.SubElement(self._data, "SupportedFeatures")
-        for feature in supported_features:
-            ET.SubElement(supported, feature)
+        if (supported_features is not None):
+            for feature in supported_features:
+                ET.SubElement(supported, feature)
         return self  
     
     @classmethod
     def Notification(cls, notification_code, severity, description):
         self = cls(None, "Notification")
-        self.__set("NotificationCode", notification_code)
-        self.__set("Severity", severity)
-        self.__set("Description", description)
+        self.set("NotificationCode", notification_code)
+        self.set("Severity", severity)
+        self.set("Description", description)
         return self
 
     @classmethod
@@ -151,22 +169,22 @@ class Message:
                        weight = None,
                        work_order_id = None):
         self = cls(None, "BoardAvailable")
-        self.__set("BoardId", board_id)
-        self.__set("BoardIdCreatedBy", board_id_created_by)
-        self.__set("ProductTypeId", product_type_id)
-        self.__set("FailedBoard", failed_board)
-        self.__set("ProductTypeId", product_type_id)
-        self.__set("FlippedBoard", flipped_board)
-        self.__set("TopBarcode", top_barcode)
-        self.__set("BottomBarcode", bottom_barcode)
-        self.__set("Length", length)
-        self.__set("Width", width)
-        self.__set("Thickness", thickness)
-        self.__set("ConveyorSpeed", conveyor_speed)        
-        self.__set("TopClearanceHeight", top_clearance_height)
-        self.__set("BottomClearanceHeight", bottom_clearance_height)
-        self.__set("Weight", weight)
-        self.__set("WorkOrderId", work_order_id)
+        self.set("BoardId", board_id)
+        self.set("BoardIdCreatedBy", board_id_created_by)
+        self.set("ProductTypeId", product_type_id)
+        self.set("FailedBoard", failed_board)
+        self.set("ProductTypeId", product_type_id)
+        self.set("FlippedBoard", flipped_board)
+        self.set("TopBarcode", top_barcode)
+        self.set("BottomBarcode", bottom_barcode)
+        self.set("Length", length)
+        self.set("Width", width)
+        self.set("Thickness", thickness)
+        self.set("ConveyorSpeed", conveyor_speed)        
+        self.set("TopClearanceHeight", top_clearance_height)
+        self.set("BottomClearanceHeight", bottom_clearance_height)
+        self.set("Weight", weight)
+        self.set("WorkOrderId", work_order_id)
         return self   
 
     @classmethod
@@ -190,19 +208,19 @@ class Message:
                      weight = None,
                      work_order_id = None):
         self = cls(None, "MachineReady")
-        self.__set("FailedBoard", failed_board)
-        self.__set("ForecastId", forecast_id)
-        self.__set("BoardId", board_id)
-        self.__set("ProductTypeId", product_type_id)
-        self.__set("FlippedBoard", flipped_board)
-        self.__set("Length", length)
-        self.__set("Width", width)
-        self.__set("Thickness", thickness)
-        self.__set("ConveyorSpeed", conveyor_speed)        
-        self.__set("TopClearanceHeight", top_clearance_height)
-        self.__set("BottomClearanceHeight", bottom_clearance_height)
-        self.__set("Weight", weight)
-        self.__set("WorkOrderId", work_order_id)
+        self.set("FailedBoard", failed_board)
+        self.set("ForecastId", forecast_id)
+        self.set("BoardId", board_id)
+        self.set("ProductTypeId", product_type_id)
+        self.set("FlippedBoard", flipped_board)
+        self.set("Length", length)
+        self.set("Width", width)
+        self.set("Thickness", thickness)
+        self.set("ConveyorSpeed", conveyor_speed)        
+        self.set("TopClearanceHeight", top_clearance_height)
+        self.set("BottomClearanceHeight", bottom_clearance_height)
+        self.set("Weight", weight)
+        self.set("WorkOrderId", work_order_id)
         return self  
 
     @classmethod
@@ -210,6 +228,6 @@ class Message:
         self = cls(None, "RevokeMachineReady")
         return self
 
-    def __set(self, name, value):
+    def set(self, name, value):
         if value is not None:
             self._data.set(name, str(value))
