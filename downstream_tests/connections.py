@@ -5,6 +5,7 @@ import xml.etree.ElementTree as ET
 
 from messages import Message
 from state_machine import UpstreamStateMachine
+from errors import TestError
 
 TIMEOUT = 1.0
 BUFFERSIZE = 4096
@@ -77,28 +78,26 @@ class UpstreamConnection:
                 return True
 
     def expect_message(self, tag, timeout_secs = 60.0):
-        first_get = None
+        start_time = datetime.now()
 
         while True:
             while len(self._deque):
                 msg = self._deque.popleft()
                 if msg.tag == tag:
                     return msg
-
-            first_get = datetime.now()
         
+            print(".", end = "")
             #queue is exhausted, so now wait for new messages:
             try:
                 has_received = self.__get_next_message()
-                print(".", end = "")
                 if not has_received:
-                    raise IOError("socket closed")
+                    raise TestError(f"Socket closed before expected message <{tag}>")
 
             except socket.timeout:
                 now = datetime.now()
-                delta = now - first_get
+                delta = now - start_time
                 if delta.total_seconds() > timeout_secs:
-                    raise
+                    raise TestError(f"Expected message <{tag}>, but timed out after {timeout_secs} seconds")
 
     def close(self):
         if self._socket is not None:
