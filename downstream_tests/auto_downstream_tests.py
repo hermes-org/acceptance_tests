@@ -144,25 +144,46 @@ def test_multiple_messages_per_packet():
         ctxt.expect_message("ServiceDescription")
 
 @test_decorator
-def test_wrong_messages():
+def test_terminate_on_illegal_message():
     with create_upstream_context() as ctxt:
-        # this test can send loads of messages and combinations which are not expected or not valid in current context
-        # todo: write ech step to log to easily find the position where something went wrong
-
-        print_and_log("Send unknown message", log)
         msg_bytes = b"<Hermes Timestamp='2020-04-28T10:01:20.768'><ThisIsNotAKnownMessage /></Hermes>"
         ctxt.send_tag_and_bytes(None, msg_bytes)
-        ctxt.expect_message("Notification")        
+        # other end has to close connection so check if socked is dead now, optionally a Notification can be sent before closing
+        try:
+            ctxt._socket.recv(0)
+            uc.expect_message("Notification")
+            ctxt.close()
+            raise ValueError("illegal message erroneously accepted")
+        except:
+            pass # everythign fine, the connection is no longer valid
 
-        print_and_log("Send premature RevokeBoardAvailable", log)
+@test_decorator
+def test_terminate_on_unexpected_revoke_board_avail():
+    with create_upstream_context() as ctxt:
         msg = Message.RevokeBoardAvailable()
         ctxt.send_msg(msg)
-        ctxt.expect_message("Notification")        
+        # other end has to close connection so check if socked is dead now, optionally a Notification can be sent before closing
+        try:
+            ctxt._socket.recv(0)
+            uc.expect_message("Notification")
+            ctxt.close()
+            raise ValueError("RevokeBoardAvailable erroneously accepted")
+        except:
+            pass # everythign fine, the connection is no longer valid
         
-        print_and_log("Send premature RevokeMachineReady", log)
+@test_decorator
+def test_terminate_on_unexpected_revoke_machine_ready():
+    with create_upstream_context() as ctxt:
         msg = Message.RevokeMachineReady()
         ctxt.send_msg(msg)
-        ctxt.expect_message("Notification")        
+        # other end has to close connection so check if socked is dead now, optionally a Notification can be sent before closing
+        try:
+            ctxt._socket.recv(0)
+            uc.expect_message("Notification")
+            ctxt.close()
+            raise ValueError("RevokeMachineReady erroneously accepted")
+        except:
+            pass # everythign fine, the connection is no longer valid
 
 def main():
     global log
