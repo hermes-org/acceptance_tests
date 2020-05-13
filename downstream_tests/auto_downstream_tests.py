@@ -46,16 +46,16 @@ def test_decorator(func):
         else:
             timestamp = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%M')
             print(f"{timestamp} Executing {func.__name__}...", end="")
-            log.log_start(func.__name__)
+            log.log_start(f"{count} - {func.__name__}")
             try:
                 func()
             except Exception as e:
                 test_failed = True
                 print(f"FAILED with error: {str(e)}")
-                log.log_finish(func.__name__, TestResult.FAIL)
+                log.log_finish(f"{count} - {func.__name__}", TestResult.FAIL)
             else:
                 print("succeeded")
-                log.log_finish(func.__name__, TestResult.PASS)
+                log.log_finish(f"{count} - {func.__name__}", TestResult.PASS)
 
     TEST_CASES.append(test_wrapper)
         
@@ -155,7 +155,21 @@ def test_terminate_on_illegal_message():
             ctxt.close()
             raise ValueError("illegal message erroneously accepted")
         except:
-            pass # everythign fine, the connection is no longer valid
+            # try the same after initial handshake
+            ctxt.close()
+            with create_upstream_context() as ctxt:
+                ctxt.send_msg(Message.ServiceDescription("AcceptanceTest", 2))
+                ctxt.expect_message("ServiceDescription")
+
+                ctxt.send_tag_and_bytes(None, msg_bytes)
+                # other end has to close connection so check if socked is dead now, optionally a Notification can be sent before closing
+                try:
+                    ctxt._socket.recv(0)
+                    uc.expect_message("Notification")
+                    ctxt.close()
+                    raise ValueError("illegal message erroneously accepted after handshake")
+                except:
+                    pass
 
 @test_decorator
 def test_terminate_on_unexpected_revoke_board_avail():
@@ -169,7 +183,22 @@ def test_terminate_on_unexpected_revoke_board_avail():
             ctxt.close()
             raise ValueError("RevokeBoardAvailable erroneously accepted")
         except:
-            pass # everythign fine, the connection is no longer valid
+            # try the same after initial handshake
+            ctxt.close()
+            with create_upstream_context() as ctxt:
+                ctxt.send_msg(Message.ServiceDescription("AcceptanceTest", 2))
+                ctxt.expect_message("ServiceDescription")
+
+                ctxt.send_msg(msg)
+                # other end has to close connection so check if socked is dead now, optionally a Notification can be sent before closing
+                try:
+                    ctxt._socket.recv(0)
+                    uc.expect_message("Notification")
+                    ctxt.close()
+                    raise ValueError("RevokeBoardAvailable erroneously accepted after handshake")
+                except:
+                    pass
+
         
 @test_decorator
 def test_terminate_on_unexpected_revoke_machine_ready():
@@ -183,7 +212,21 @@ def test_terminate_on_unexpected_revoke_machine_ready():
             ctxt.close()
             raise ValueError("RevokeMachineReady erroneously accepted")
         except:
-            pass # everythign fine, the connection is no longer valid
+            # try the same after initial handshake
+            ctxt.close()
+            with create_upstream_context() as ctxt:
+                ctxt.send_msg(Message.ServiceDescription("AcceptanceTest", 2))
+                ctxt.expect_message("ServiceDescription")
+
+                ctxt.send_msg(msg)
+                # other end has to close connection so check if socked is dead now, optionally a Notification can be sent before closing
+                try:
+                    ctxt._socket.recv(0)
+                    uc.expect_message("Notification")
+                    ctxt.close()
+                    raise ValueError("RevokeMachineReady erroneously accepted after handshake")
+                except:
+                    pass
 
 def main():
     global log
@@ -198,12 +241,14 @@ def main():
 
             selection=int(input())
             if (selection==0):
+                i=0;
                 for test_case in TEST_CASES:
-                    test_case(0,0)
+                    i=i+1
+                    test_case(0,i)
                 working=False
             else:
                 if (selection<=len(TEST_CASES)):
-                    TEST_CASES[selection-1](0,0)
+                    TEST_CASES[selection-1](0,selection)
                 working=False
 
         if test_failed == True:
