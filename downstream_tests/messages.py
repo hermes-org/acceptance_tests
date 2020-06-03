@@ -228,6 +228,54 @@ class Message:
         self = cls(None, "RevokeMachineReady")
         return self
 
+    @classmethod
+    def TransportFinished(cls,
+                          transfer_state = 1,
+                          board_id = None):
+        self = cls(None, "TransportFinished")
+        self.set("TransferState", transfer_state)
+        self.set("BoardId", board_id)
+        return self
+
+    @classmethod
+    def BoardForecast(cls,
+                      failed_board,
+                      flipped_board,
+                      forecast_id = None,
+                      time_until_avail = None,
+                      board_id = None,
+                      board_id_created_by = None,
+                      product_type_id = None,
+                      top_barcode = None,
+                      bottom_barcode = None,
+                      length = None,
+                      width = None,
+                      thickness = None,
+                      conveyor_speed = None,
+                      top_clearance_height = None,
+                      bottom_clearance_height = None,
+                      weight = None,
+                      work_order_id = None):
+        self = cls(None, "TransportFinished")
+        self.set("ForecastId", forecast_id)
+        self.set("TimeUntilAvailable", time_until_avail)
+        self.set("BoardId", board_id)
+        self.set("BoardIdCreatedBy", board_id_created_by)
+        self.set("FailedBoard", failed_board)
+        self.set("ProductTypeId", product_type_id)
+        self.set("FlippedBoard", flipped_board)
+        self.set("TopBarcode", top_barcode)
+        self.set("BottomBarcode", bottom_barcode)
+        self.set("Length", length)
+        self.set("Width", width)
+        self.set("Thickness", thickness)
+        self.set("ConveyorSpeed", conveyor_speed)        
+        self.set("TopClearanceHeight", top_clearance_height)
+        self.set("BottomClearanceHeight", bottom_clearance_height)
+        self.set("Weight", weight)
+        self.set("WorkOrderId", work_order_id)
+        return self
+
     def set(self, name, value):
         if value is not None:
             self._data.set(name, str(value))

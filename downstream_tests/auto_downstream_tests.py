@@ -172,7 +172,7 @@ def test_terminate_on_illegal_message():
                     pass
 
 @test_decorator
-def test_terminate_on_unexpected_revoke_board_avail():
+def test_terminate_on_msg_before_service_desc():
     with create_upstream_context() as ctxt:
         msg = Message.RevokeBoardAvailable()
         ctxt.send_msg(msg)
@@ -183,26 +183,73 @@ def test_terminate_on_unexpected_revoke_board_avail():
             ctxt.close()
             raise ValueError("RevokeBoardAvailable erroneously accepted")
         except:
-            # try the same after initial handshake
+            # try with the next message
             ctxt.close()
-            with create_upstream_context() as ctxt:
-                ctxt.send_msg(Message.ServiceDescription("AcceptanceTest", 2))
-                ctxt.expect_message("ServiceDescription")
 
+            with create_upstream_context() as ctxt:
+                msg = Message.BoardAvailable("TestBoard","HermesAcceptanceTester")
                 ctxt.send_msg(msg)
                 # other end has to close connection so check if socked is dead now, optionally a Notification can be sent before closing
                 try:
                     ctxt._socket.recv(0)
                     uc.expect_message("Notification")
                     ctxt.close()
-                    raise ValueError("RevokeBoardAvailable erroneously accepted after handshake")
+                    raise ValueError("BoardAvailable erroneously accepted")
                 except:
-                    pass
+                    # try with the next message
+                    ctxt.close()
+
+                    with create_upstream_context() as ctxt:
+                        msg = Message.TransportFinished()
+                        ctxt.send_msg(msg)
+                        # other end has to close connection so check if socked is dead now, optionally a Notification can be sent before closing
+                        try:
+                            ctxt._socket.recv(0)
+                            uc.expect_message("Notification")
+                            ctxt.close()
+                            raise ValueError("TransportFinished erroneously accepted")
+                        except:
+                            # try with the next message
+                            ctxt.close()
+
+                            with create_upstream_context() as ctxt:
+                                msg = Message.BoardForecast(1,0)
+                                ctxt.send_msg(msg)
+                                # other end has to close connection so check if socked is dead now, optionally a Notification can be sent before closing
+                                try:
+                                    ctxt._socket.recv(0)
+                                    uc.expect_message("Notification")
+                                    ctxt.close()
+                                    raise ValueError("TransportFinished erroneously accepted")
+                                except:
+                                    # try with the next message
+                                    ctxt.close()
+
+        
+@test_decorator
+def test_terminate_on_unexpected_revoke_board_avail():
+    with create_upstream_context() as ctxt:
+        ctxt.send_msg(Message.ServiceDescription("AcceptanceTest", 2))
+        ctxt.expect_message("ServiceDescription")
+
+        msg = Message.RevokeBoardAvailable()
+        ctxt.send_msg(msg)
+        # other end has to close connection so check if socked is dead now, optionally a Notification can be sent before closing
+        try:
+            ctxt._socket.recv(0)
+            uc.expect_message("Notification")
+            ctxt.close()
+            raise ValueError("RevokeBoardAvailable erroneously accepted after handshake")
+        except:
+            pass
 
         
 @test_decorator
 def test_terminate_on_unexpected_revoke_machine_ready():
     with create_upstream_context() as ctxt:
+        ctxt.send_msg(Message.ServiceDescription("AcceptanceTest", 2))
+        ctxt.expect_message("ServiceDescription")
+
         msg = Message.RevokeMachineReady()
         ctxt.send_msg(msg)
         # other end has to close connection so check if socked is dead now, optionally a Notification can be sent before closing
@@ -210,23 +257,27 @@ def test_terminate_on_unexpected_revoke_machine_ready():
             ctxt._socket.recv(0)
             uc.expect_message("Notification")
             ctxt.close()
-            raise ValueError("RevokeMachineReady erroneously accepted")
+            raise ValueError("RevokeMachineReady erroneously accepted after handshake")
         except:
-            # try the same after initial handshake
-            ctxt.close()
-            with create_upstream_context() as ctxt:
-                ctxt.send_msg(Message.ServiceDescription("AcceptanceTest", 2))
-                ctxt.expect_message("ServiceDescription")
+            pass
 
-                ctxt.send_msg(msg)
-                # other end has to close connection so check if socked is dead now, optionally a Notification can be sent before closing
-                try:
-                    ctxt._socket.recv(0)
-                    uc.expect_message("Notification")
-                    ctxt.close()
-                    raise ValueError("RevokeMachineReady erroneously accepted after handshake")
-                except:
-                    pass
+@test_decorator
+def test_terminate_on_unexpected_transport_finished():
+    with create_upstream_context() as ctxt:
+        ctxt.send_msg(Message.ServiceDescription("AcceptanceTest", 2))
+        ctxt.expect_message("ServiceDescription")
+
+        msg = Message.TransportFinished()
+        ctxt.send_msg(msg)
+        # other end has to close connection so check if socked is dead now, optionally a Notification can be sent before closing
+        try:
+            ctxt._socket.recv(0)
+            uc.expect_message("Notification")
+            ctxt.close()
+            raise ValueError("TransportFinished erroneously accepted after handshake")
+        except:
+            pass
+
 
 def main():
     global log
