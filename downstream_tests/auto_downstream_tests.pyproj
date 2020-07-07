@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>2e64520b-95c2-4637-805d-09603f67f181</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>interactive_downstream_tests.py</StartupFile>
+    <StartupFile>auto_downstream_tests.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>

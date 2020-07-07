@@ -1,5 +1,5 @@
 from datetime import datetime
-from messages import Message
+from messages import Message, TransferState
 from contextlib import contextmanager
 
 from connections import UpstreamConnection
@@ -46,16 +46,16 @@ def test_decorator(func):
         else:
             timestamp = datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%M')
             print(f"{timestamp} Executing {func.__name__}...", end="")
-            log.log_start(func.__name__)
+            log.log_start(f"{count} - {func.__name__}")
             try:
                 func()
             except Exception as e:
                 test_failed = True
                 print(f"FAILED with error: {str(e)}")
-                log.log_finish(func.__name__, TestResult.FAIL)
+                log.log_finish(f"{count} - {func.__name__}", TestResult.FAIL)
             else:
                 print("succeeded")
-                log.log_finish(func.__name__, TestResult.PASS)
+                log.log_finish(f"{count} - {func.__name__}", TestResult.PASS)
 
     TEST_CASES.append(test_wrapper)
         
@@ -144,25 +144,160 @@ def test_multiple_messages_per_packet():
         ctxt.expect_message("ServiceDescription")
 
 @test_decorator
-def test_wrong_messages():
+def test_terminate_on_illegal_message():
     with create_upstream_context() as ctxt:
-        # this test can sends loads of messages and combinations which are not expected or not valid in current context
-        # todo: write ech step to log to easily find the position where something went wrong
-
-        print_and_log("Send unknown message", log)
         msg_bytes = b"<Hermes Timestamp='2020-04-28T10:01:20.768'><ThisIsNotAKnownMessage /></Hermes>"
         ctxt.send_tag_and_bytes(None, msg_bytes)
-        ctxt.expect_message("Notification")        
+        # other end has to close connection so check if socked is dead now, optionally a Notification can be sent before closing
+        try:
+            ctxt._socket.recv(0)
+            uc.expect_message("Notification")
+            ctxt.close()
+            raise ValueError("illegal message erroneously accepted")
+        except:
+            # try the same after initial handshake
+            ctxt.close()
+            with create_upstream_context() as ctxt:
+                ctxt.send_msg(Message.ServiceDescription("AcceptanceTest", 2))
+                ctxt.expect_message("ServiceDescription")
 
-        print_and_log("Send premature RevokeBoardAvailable", log)
+                ctxt.send_tag_and_bytes(None, msg_bytes)
+                # other end has to close connection so check if socked is dead now, optionally a Notification can be sent before closing
+                try:
+                    ctxt._socket.recv(0)
+                    uc.expect_message("Notification")
+                    ctxt.close()
+                    raise ValueError("illegal message erroneously accepted after handshake")
+                except:
+                    pass
+
+@test_decorator
+def test_terminate_on_msg_before_service_desc():
+    with create_upstream_context() as ctxt:
         msg = Message.RevokeBoardAvailable()
         ctxt.send_msg(msg)
-        ctxt.expect_message("Notification")        
+        # other end has to close connection so check if socked is dead now, optionally a Notification can be sent before closing
+        try:
+            ctxt._socket.recv(0)
+            uc.expect_message("Notification")
+            ctxt.close()
+            raise ValueError("RevokeBoardAvailable erroneously accepted")
+        except:
+            # try with the next message
+            ctxt.close()
+
+            with create_upstream_context() as ctxt:
+                msg = Message.BoardAvailable("TestBoard","HermesAcceptanceTester")
+                board_id = msg.data.get("BoardId")
+                ctxt.send_msg(msg)
+                # other end has to close connection so check if socked is dead now, optionally a Notification can be sent before closing
+                try:
+                    ctxt._socket.recv(0)
+                    uc.expect_message("Notification")
+                    ctxt.close()
+                    raise ValueError("BoardAvailable erroneously accepted")
+                except:
+                    # try with the next message
+                    ctxt.close()
+
+                    with create_upstream_context() as ctxt:
+                        msg = Message.TransportFinished(TransferState.COMPLETE, board_id)
+                        ctxt.send_msg(msg)
+                        # other end has to close connection so check if socked is dead now, optionally a Notification can be sent before closing
+                        try:
+                            ctxt._socket.recv(0)
+                            uc.expect_message("Notification")
+                            ctxt.close()
+                            raise ValueError("TransportFinished erroneously accepted")
+                        except:
+                            # try with the next message
+                            ctxt.close()
+
+                            with create_upstream_context() as ctxt:
+                                msg = Message.BoardForecast()
+                                ctxt.send_msg(msg)
+                                # other end has to close connection so check if socked is dead now, optionally a Notification can be sent before closing
+                                try:
+                                    ctxt._socket.recv(0)
+                                    uc.expect_message("Notification")
+                                    ctxt.close()
+                                    raise ValueError("TransportFinished erroneously accepted")
+                                except:
+                                    # try with the next message
+                                    ctxt.close()
+
         
-        print_and_log("Send premature RevokeMachineReady", log)
+@test_decorator
+def test_terminate_on_unexpected_revoke_board_available():
+    with create_upstream_context() as ctxt:
+        ctxt.send_msg(Message.ServiceDescription("AcceptanceTest", 2))
+        ctxt.expect_message("ServiceDescription")
+
+        msg = Message.RevokeBoardAvailable()
+        ctxt.send_msg(msg)
+        # other end has to close connection so check if socked is dead now, optionally a Notification can be sent before closing
+        try:
+            ctxt._socket.recv(0)
+            uc.expect_message("Notification")
+            ctxt.close()
+            raise ValueError("RevokeBoardAvailable erroneously accepted after handshake")
+        except:
+            pass
+
+        
+@test_decorator
+def test_terminate_on_unexpected_revoke_machine_ready():
+    with create_upstream_context() as ctxt:
+        ctxt.send_msg(Message.ServiceDescription("AcceptanceTest", 2))
+        ctxt.expect_message("ServiceDescription")
+
         msg = Message.RevokeMachineReady()
         ctxt.send_msg(msg)
-        ctxt.expect_message("Notification")        
+        # other end has to close connection so check if socked is dead now, optionally a Notification can be sent before closing
+        try:
+            ctxt._socket.recv(0)
+            uc.expect_message("Notification")
+            ctxt.close()
+            raise ValueError("RevokeMachineReady erroneously accepted after handshake")
+        except:
+            pass
+
+@test_decorator
+def test_terminate_on_unexpected_transport_finished():
+    with create_upstream_context() as ctxt:
+        ctxt.send_msg(Message.ServiceDescription("AcceptanceTest", 2))
+        ctxt.expect_message("ServiceDescription")
+
+        msg = Message.TransportFinished(TransferState.COMPLETE, "some_guid")
+        ctxt.send_msg(msg)
+        # other end has to close connection so check if socked is dead now, optionally a Notification can be sent before closing
+        try:
+            ctxt._socket.recv(0)
+            uc.expect_message("Notification")
+            ctxt.close()
+            raise ValueError("TransportFinished erroneously accepted after handshake")
+        except:
+            pass
+
+@test_decorator
+def test_complete_cycle():
+    with create_upstream_context() as ctxt:
+        ctxt.send_msg(Message.ServiceDescription("AcceptanceTestCompleteCycle", 2))
+        ctxt.expect_message("ServiceDescription")
+
+        msg = Message.MachineReady()
+        ctxt.send_msg(msg)
+        board_available = ctxt.expect_message("BoardAvailable")
+        board_id = board_available.data.get("BoardId")
+
+        msg = Message.StartTransport(board_id)
+        ctxt.send_msg(msg)
+        ctxt.expect_message("TransportFinished")
+
+        msg = Message.StopTransport(TransferState.COMPLETE, board_id)
+        ctxt.send_msg(msg)
+        ctxt.close();
+
 
 def main():
     global log
@@ -177,12 +312,14 @@ def main():
 
             selection=int(input())
             if (selection==0):
+                i=0;
                 for test_case in TEST_CASES:
-                    test_case(0,0)
+                    i=i+1
+                    test_case(0,i)
                 working=False
             else:
                 if (selection<=len(TEST_CASES)):
-                    TEST_CASES[selection-1](0,0)
+                    TEST_CASES[selection-1](0,selection)
                 working=False
 
         if test_failed == True:

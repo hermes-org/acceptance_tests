@@ -21,71 +21,25 @@ class Tag:
     GET_CONFIGURATION = "GetConfiguration"
     CURRENT_CONFIGURATION = "CurrentConfiguration"
 
-CHECK_ALIVE_PING = 1
-CHECK_ALIVE_PONG = 2
-UNKNOWN_QUALITY = 0
-GOOD_BOARD = 1
-FAILED_BOARD = 2
+class CheckAliveType:
+    PING = 1
+    PONG = 2
 
-SIDE_UP_UKNOWN = 0
-BOARD_TOP_SIDE_UP = 1
-BOARD_BOTTOM_SIDE_UP = 2
+class BoardQuality:
+    UNKNOWN = 0
+    ANY = 0
+    GOOD = 1
+    BAD = 2
+
+class FlippedBoard:
+    SIDE_UP_IS_UKNOWN = 0
+    TOP_SIDE_IS_UP = 1
+    BOTTOM_SIDE_IS_UP = 2
 
 class TransferState:
-    TRANSFER_NOT_STARTED = 1
-    TRANSFER_INCOMPLETE = 2
-    TRANSFER_COMPLETE = 3
-
-# def __to_optional_float(value):
-#     try:
-#         return float(value)
-#     except:
-#         return None
-
-# def __to_optional_int(value)
-#     try:
-#         return int(value)
-#     except:
-#         return None
-
-# class __Data:
-#     def __init__(self, xml_data):
-#         self._data = xml_data
-
-#     __to_string(self, name):
-        
-
-# class CheckAliveData:
-#     def __init__(self, xml_data):
-#         self._data = xml_data
-
-#     def optional_type(self):
-#         return __to_optional_int(self._data.get("Type"))
-    
-#     def optional_id(self):
-#         return self._data.get("Id")
-
-# class ServiceDescriptionData:
-#     def __init__(self, xml_data):
-#         self._data = xml_data
-
-#     def machine_id(self):
-#         return self._data.get("MachineId")
-
-#     def lane_id(self):
-#         return self._data.get("LaneId")
-    
-#     def optional_interface_id(self):
-        
-#         return self._data.get("InterfaceId")
-
-#     def version(self):
-#         return self._data.get("")
-
-# class NotificationData:
-#     def __init__(self, xml_data):
-#         self._data = xml_data
-
+    NOT_STARTED = 1
+    INCOMPLETE = 2
+    COMPLETE = 3
 
 class Message:
     def __init__(self, xml_root, tag = None):
@@ -162,9 +116,9 @@ class Message:
     def BoardAvailable(cls, 
                        board_id, 
                        board_id_created_by, 
-                       failed_board = UNKNOWN_QUALITY,
+                       failed_board = BoardQuality.UNKNOWN,
                        product_type_id = None, 
-                       flipped_board = SIDE_UP_UKNOWN,
+                       flipped_board = FlippedBoard.SIDE_UP_IS_UKNOWN,
                        top_barcode = None,
                        bottom_barcode = None,
                        length = None,
@@ -195,17 +149,57 @@ class Message:
         return self   
 
     @classmethod
+    def BoardForecast(cls,
+                      forecast_id = None, 
+                      time_until_available = None, 
+                      board_id = None,
+                      board_id_created_by = None,
+                      failed_board = BoardQuality.UNKNOWN,
+                      product_type_id = None, 
+                      flipped_board = FlippedBoard.SIDE_UP_IS_UKNOWN,
+                      top_barcode = None,
+                      bottom_barcode = None,
+                      length = None,
+                      width = None,
+                      thickness = None,
+                      conveyor_speed = None,
+                      top_clearance_height = None,
+                      bottom_clearance_height = None,
+                      weight = None,
+                      work_order_id = None):
+        self = cls(None, Tag.BOARD_FORECAST)
+        self.set("ForecastId", forecast_id)
+        self.set("TimeUntilAvailable", time_until_available)
+        self.set("BoardId", board_id)
+        self.set("BoardIdCreatedBy", board_id_created_by)
+        self.set("ProductTypeId", product_type_id)
+        self.set("FailedBoard", failed_board)
+        self.set("ProductTypeId", product_type_id)
+        self.set("FlippedBoard", flipped_board)
+        self.set("TopBarcode", top_barcode)
+        self.set("BottomBarcode", bottom_barcode)
+        self.set("Length", length)
+        self.set("Width", width)
+        self.set("Thickness", thickness)
+        self.set("ConveyorSpeed", conveyor_speed)        
+        self.set("TopClearanceHeight", top_clearance_height)
+        self.set("BottomClearanceHeight", bottom_clearance_height)
+        self.set("Weight", weight)
+        self.set("WorkOrderId", work_order_id)
+        return self  
+
+    @classmethod
     def RevokeBoardAvailable(cls):
         self = cls(None, "RevokeBoardAvailable")
         return self
 
     @classmethod
     def MachineReady(cls,
-                     failed_board = UNKNOWN_QUALITY,
+                     failed_board = BoardQuality.ANY,
                      forecast_id = None,
                      board_id = None,
                      product_type_id = None,
-                     flipped_board = SIDE_UP_UKNOWN,
+                     flipped_board = FlippedBoard.SIDE_UP_IS_UKNOWN,
                      length = None,
                      width = None,
                      thickness = None,

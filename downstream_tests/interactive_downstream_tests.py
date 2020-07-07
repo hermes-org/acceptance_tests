@@ -107,7 +107,7 @@ def connect_and_transfer():
         board_available = ctxt.expect_message("BoardAvailable")
         board_id = board_available.data.get("BoardId")
         ctxt.send_msg(Message.StartTransport(board_id))
-        ctxt.send_msg(Message.StopTransport(TransferState.TRANSFER_COMPLETE, board_id))
+        ctxt.send_msg(Message.StopTransport(TransferState.COMPLETE, board_id))
         transport_finished = ctxt.expect_message("TransportFinished")
         assert transport_finished.data.get("BoardId") == board_id, "BoardId mismatch"
 
