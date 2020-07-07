@@ -279,6 +279,25 @@ def test_terminate_on_unexpected_transport_finished():
             pass
 
 
+@test_decorator
+def test_complete_cycle():
+    with create_upstream_context() as ctxt:
+        ctxt.send_msg(Message.ServiceDescription("AcceptanceTestCompleteCycle", 2))
+        ctxt.expect_message("ServiceDescription")
+
+        msg = Message.MachineReady()
+        ctxt.send_msg(msg)
+        ctxt.expect_message("BoardAvailable")
+
+        msg = Message.StartTransport()
+        ctxt.send_msg(msg)
+        ctxt.expect_message("TransportFinished")
+
+        msg = Message.StopStransport()
+        ctxt.send_msg(msg)
+        ctxt.close();
+
+
 def main():
     global log
     with create_log("AutomaticDownstream") as log:
