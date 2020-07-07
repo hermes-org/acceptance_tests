@@ -19,6 +19,5 @@ class XmlError(TestError):
 
 class AssertError(TestError):
     """Test assertion failed"""
-
-
-
+    def __init__(self, msg):
+        super().__init__(f"Test assertion failed: {msg}")

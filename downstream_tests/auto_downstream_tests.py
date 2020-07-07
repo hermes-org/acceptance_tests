@@ -26,7 +26,7 @@ def create_upstream_context(host=globalHost, port = globalPort):
         raise
 
 @contextmanager
-def create_upstream_context_with_hand_shake(host = "localhost", port = 50101):
+def create_upstream_context_with_handshake(host = "localhost", port = 50101):
     uc = UpstreamConnection(log)
     try:
         uc.connect(host, port)
@@ -117,7 +117,7 @@ def connect_service_description_disconnect_n_times():
 
 @test_decorator
 def connect_handshake_disconnect():
-    with create_upstream_context_with_hand_shake():
+    with create_upstream_context_with_handshake():
         pass
 
 @test_decorator

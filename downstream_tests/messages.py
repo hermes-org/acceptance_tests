@@ -1,23 +1,25 @@
 import xml.etree.ElementTree as ET
 from datetime import datetime
 
-UNKNOWN = "Unknown"
-CHECK_ALIVE = "CheckAlive"
-SERVICE_DESCRIPTION = "ServiceDescription"
-NOTIFICATION = "Notification"
-BOARD_AVAILABLE = "BoardAvailable"
-REVOKE_BOARD_AVAILABLE = "RevokeBoardAvailable"
-MACHINE_READY = "MachineReady"
-REVOKE_MACHINE_READY = "RevokeMachineReady"
-START_TRANSPORT = "TransportReady"
-STOP_TRANSPORT = "StopTransport"
-TRANSPORT_FINISHED = "TransportFinished"
-BOARD_FORECAST = "BoardForecast"
-QUERY_BOARD_INFO = "QuerayBoardInfo"
-SEND_BOARD_INFO = "SendBoardInfo"
-SET_CONFIGURATION = "SetConfiguration"
-GET_CONFIGURATION = "GetConfiguration"
-CURRENT_CONFIGURATION = "CurrentConfiguration"
+MAXMESSAGESIZE = 65536
+class Tag:
+    UNKNOWN = "Unknown"
+    CHECK_ALIVE = "CheckAlive"
+    SERVICE_DESCRIPTION = "ServiceDescription"
+    NOTIFICATION = "Notification"
+    BOARD_AVAILABLE = "BoardAvailable"
+    REVOKE_BOARD_AVAILABLE = "RevokeBoardAvailable"
+    MACHINE_READY = "MachineReady"
+    REVOKE_MACHINE_READY = "RevokeMachineReady"
+    START_TRANSPORT = "StartTransport"
+    STOP_TRANSPORT = "StopTransport"
+    TRANSPORT_FINISHED = "TransportFinished"
+    BOARD_FORECAST = "BoardForecast"
+    QUERY_BOARD_INFO = "QueryBoardInfo"
+    SEND_BOARD_INFO = "SendBoardInfo"
+    SET_CONFIGURATION = "SetConfiguration"
+    GET_CONFIGURATION = "GetConfiguration"
+    CURRENT_CONFIGURATION = "CurrentConfiguration"
 
 CHECK_ALIVE_PING = 1
 CHECK_ALIVE_PONG = 2
@@ -28,6 +30,11 @@ FAILED_BOARD = 2
 SIDE_UP_UKNOWN = 0
 BOARD_TOP_SIDE_UP = 1
 BOARD_BOTTOM_SIDE_UP = 2
+
+class TransferState:
+    TRANSFER_NOT_STARTED = 1
+    TRANSFER_INCOMPLETE = 2
+    TRANSFER_COMPLETE = 3
 
 # def __to_optional_float(value):
 #     try:
@@ -221,11 +228,38 @@ class Message:
         self.set("BottomClearanceHeight", bottom_clearance_height)
         self.set("Weight", weight)
         self.set("WorkOrderId", work_order_id)
-        return self  
+        return self
 
     @classmethod
     def RevokeMachineReady(cls):
         self = cls(None, "RevokeMachineReady")
+        return self
+
+    @classmethod
+    def StartTransport(cls,
+                       board_id, 
+                       conveyor_speed = None):
+        self = cls(None, "StartTransport")
+        self.set("BoardId", board_id)
+        self.set("ConveyorSpeed", conveyor_speed)        
+        return self
+
+    @classmethod
+    def StopTransport(cls,
+                      transfer_state,
+                      board_id):
+        self = cls(None, "StopTransport")
+        self.set("TransferState", transfer_state)
+        self.set("BoardId", board_id)
+        return self
+
+    @classmethod
+    def TransportFinished(cls,
+                      transfer_state,
+                      board_id):
+        self = cls(None, "TransportFinished")
+        self.set("TransferState", transfer_state)
+        self.set("BoardId", board_id)
         return self
 
     def set(self, name, value):

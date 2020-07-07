@@ -20,6 +20,10 @@ class UpstreamConnection:
         self._socket = None
         self._state_machine = None
 
+    @property
+    def log(self):
+        return self._test_log
+
     def connect(self, host, port):
         s = None
         exc = None

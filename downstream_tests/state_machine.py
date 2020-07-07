@@ -3,39 +3,39 @@ from common_types import State
 from messages import *
 
 UPSTREAM_TRANSITION_DICT = {
-    SERVICE_DESCRIPTION: {
+    Tag.SERVICE_DESCRIPTION: {
         State.NOT_CONNECTED: State.SERVICE_DESCRIPTION_DOWNSTREAM},
-    MACHINE_READY: {
+    Tag.MACHINE_READY: {
         State.NOT_AVAILABLE_NOT_READY: State.MACHINE_READY,
         State.BOARD_AVAILABLE: State.AVAILABLE_AND_READY},
-    REVOKE_MACHINE_READY: {
+    Tag.REVOKE_MACHINE_READY: {
         State.MACHINE_READY: State.NOT_AVAILABLE_NOT_READY,
         State.AVAILABLE_AND_READY: State.BOARD_AVAILABLE},
-    START_TRANSPORT: {
+    Tag.START_TRANSPORT: {
         State.AVAILABLE_AND_READY: State.TRANSPORTING,
         State.MACHINE_READY: State.TRANSPORTING},
-    STOP_TRANSPORT: {
+    Tag.STOP_TRANSPORT: {
         State.TRANSPORTING: State.TRANSPORT_STOPPED,
         State.TRANSPORT_FINISHED: State.NOT_AVAILABLE_NOT_READY}
     }
 
 DOWNSTREAM_TRANSITION_DICT = {
-    SERVICE_DESCRIPTION: {
+    Tag.SERVICE_DESCRIPTION: {
         State.SERVICE_DESCRIPTION_DOWNSTREAM: State.NOT_AVAILABLE_NOT_READY},
-    BOARD_AVAILABLE: {
+    Tag.BOARD_AVAILABLE: {
         State.NOT_AVAILABLE_NOT_READY: State.BOARD_AVAILABLE,
         State.MACHINE_READY: State.AVAILABLE_AND_READY,
         State.TRANSPORTING: State.TRANSPORTING,
         State.TRANSPORT_STOPPED: State.TRANSPORT_STOPPED},
-    REVOKE_BOARD_AVAILABLE: {
+    Tag.REVOKE_BOARD_AVAILABLE: {
         State.BOARD_AVAILABLE: State.NOT_AVAILABLE_NOT_READY,
         State.AVAILABLE_AND_READY: State.MACHINE_READY,
         State.TRANSPORTING: State.TRANSPORTING,
         State.TRANSPORT_STOPPED: State.TRANSPORT_STOPPED},
-    TRANSPORT_FINISHED: {
+    Tag.TRANSPORT_FINISHED: {
         State.TRANSPORTING: State.TRANSPORT_FINISHED,
         State.TRANSPORT_STOPPED: State.NOT_AVAILABLE_NOT_READY},
-    BOARD_FORECAST: {
+    Tag.BOARD_FORECAST: {
         State.NOT_AVAILABLE_NOT_READY: State.NOT_AVAILABLE_NOT_READY,
         State.MACHINE_READY: State.MACHINE_READY,
         State.TRANSPORTING: State.TRANSPORTING,
@@ -75,6 +75,7 @@ class StateMachine:
                 return
 
             self._test_log.log_transition(src=self._state, tag=msg.tag, tgt=state)
+            self._state = state
 
         except KeyError:
             raise StateMachineError(self._state, msg)

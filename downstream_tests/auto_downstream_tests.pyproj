@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>2e64520b-95c2-4637-805d-09603f67f181</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>auto_downstream_tests.py</StartupFile>
+    <StartupFile>interactive_downstream_tests.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -26,6 +26,9 @@
     <Compile Include="common_types.py" />
     <Compile Include="connections.py" />
     <Compile Include="errors.py" />
+    <Compile Include="interactive_downstream_tests.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="messages.py" />
     <Compile Include="state_machine.py" />
     <Compile Include="test_log.py" />
