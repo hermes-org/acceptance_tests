@@ -39,7 +39,7 @@ def get_test_dictionary() -> dict:
 
 
 class CallbackManager():
-    """cc"""
+    """Singelton callback manager for test cases."""
     _instance = None
     _callback = None
 
@@ -48,16 +48,18 @@ class CallbackManager():
             cls._instance = super(CallbackManager, cls).__new__(cls)
         return cls._instance
 
-    def set_callback(self, func):
-        """cc"""
+    def register_callback(self, func):
+        """Register a callback function for test cases."""
         self._callback = func
 
     def is_undefined(self):
-        """cc"""
+        """Check if a callback function is registered."""
         return self._callback is None
 
     def run_callback(self, *args, **kwargs):
-        """cc"""
+        """Execute the callback function.
+           Raise a skip exception if no callback is registered.
+        """
         if self._callback is None:
             pytest.skip("missing callback")
         else:

@@ -42,7 +42,7 @@ def run_test(testcase: str, callback=None) -> bool:
     """
     if callback is not None:
         # TODO verify callback when final format decided
-        CallbackManager().set_callback(callback)
+        CallbackManager().register_callback(callback)
 
     if isinstance(testcase, tuple):
         # allow using a tuple from get_test_dictionary() as testcase
