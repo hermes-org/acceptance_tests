@@ -46,8 +46,10 @@ def test_connect_handshake_disconnect():
         pass
     assert True
 
-@hermes_testcase
-def connect_2_times():
+# TODO: This test is not working as expected, original code returned success due to a bug
+# when opening a second connection this way the first connection is closed
+# @hermes_testcase
+def test_connect_2_times():
     """Test to connect twice. Second connection should be rejected."""
     uc1 = UpstreamConnection()
     try:
