@@ -1,7 +1,18 @@
-﻿################################################################################
-# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
-################################################################################
+﻿### Application logs ###
+*.log
 
+### Python ###
+__pycache__/
+.pytest_cache/
+
+### VisualStudio ###
 /.vs/auto_tests/v16/.suo
-/downstream_tests/logs
-/downstream_tests/__pycache__
+
+### VisualStudioCode ###
+.vscode/*      # Maybe .vscode/**/* instead - see comments
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+

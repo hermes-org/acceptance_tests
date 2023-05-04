@@ -1,0 +1,13 @@
+# .toml file to build IPC-Hermes-9852 interface tester with gui
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "Hitmanager"
+version = "0.9.0"
+
+[tool.pytest.ini_options]
+pythonpath = "src/mgr/hermes_test_manager"
+testpaths = "src/mgr/hermes_test_manager/testcases"

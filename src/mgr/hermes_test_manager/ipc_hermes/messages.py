@@ -1,8 +1,12 @@
+"""IPC-Hermes-9852 message definitions."""
+
 import xml.etree.ElementTree as ET
 from datetime import datetime
 
-MAXMESSAGESIZE = 65536
+MAX_MESSAGE_SIZE = 65536
+
 class Tag:
+    """IPC-Hermes-9852 message tags."""
     UNKNOWN = "Unknown"
     CHECK_ALIVE = "CheckAlive"
     SERVICE_DESCRIPTION = "ServiceDescription"
@@ -65,7 +69,6 @@ class Message:
     @property
     def data(self):
         return self._data
- 
     @property
     def tag(self):
         return self._data.tag
@@ -74,12 +77,12 @@ class Message:
         return ET.tostring(self._root, encoding="unicode") # only unicode encoding returns a string
 
     def to_bytes(self):
-        s = ET.tostring(self._root) # returns bytes
-        return s
-    
+        retval = ET.tostring(self._root) # returns bytes
+        return retval
+
     @classmethod
-    def CheckAlive(cls, 
-                   checkalive_type = None, 
+    def CheckAlive(cls,
+                   checkalive_type = None,
                    checkalive_id = None):
         self = cls(None, "CheckAlive")
         self.set("Type", checkalive_type)
@@ -87,23 +90,23 @@ class Message:
         return self
 
     @classmethod
-    def ServiceDescription(cls, 
-                           machine_id, 
-                           lane_id, 
-                           interface_id = None, 
-                           version = "1.2", 
-                           supported_features = None):        
+    def ServiceDescription(cls,
+                           machine_id,
+                           lane_id,
+                           interface_id = None,
+                           version = "1.1",
+                           supported_features = None):
         self = cls(None, "ServiceDescription")
         self.set("MachineId", machine_id)
         self.set("LaneId", lane_id)
         self.set("Version", version)
         self.set("InterfaceId", interface_id)
         supported = ET.SubElement(self._data, "SupportedFeatures")
-        if (supported_features is not None):
+        if supported_features is not None:
             for feature in supported_features:
                 ET.SubElement(supported, feature)
-        return self  
-    
+        return self
+
     @classmethod
     def Notification(cls, notification_code, severity, description):
         self = cls(None, "Notification")
@@ -113,11 +116,11 @@ class Message:
         return self
 
     @classmethod
-    def BoardAvailable(cls, 
-                       board_id, 
-                       board_id_created_by, 
+    def BoardAvailable(cls,
+                       board_id,
+                       board_id_created_by,
                        failed_board = BoardQuality.UNKNOWN,
-                       product_type_id = None, 
+                       product_type_id = None,
                        flipped_board = FlippedBoard.SIDE_UP_IS_UKNOWN,
                        top_barcode = None,
                        bottom_barcode = None,
@@ -141,21 +144,21 @@ class Message:
         self.set("Length", length)
         self.set("Width", width)
         self.set("Thickness", thickness)
-        self.set("ConveyorSpeed", conveyor_speed)        
+        self.set("ConveyorSpeed", conveyor_speed)
         self.set("TopClearanceHeight", top_clearance_height)
         self.set("BottomClearanceHeight", bottom_clearance_height)
         self.set("Weight", weight)
         self.set("WorkOrderId", work_order_id)
-        return self   
+        return self
 
     @classmethod
     def BoardForecast(cls,
-                      forecast_id = None, 
-                      time_until_available = None, 
+                      forecast_id = None,
+                      time_until_available = None,
                       board_id = None,
                       board_id_created_by = None,
                       failed_board = BoardQuality.UNKNOWN,
-                      product_type_id = None, 
+                      product_type_id = None,
                       flipped_board = FlippedBoard.SIDE_UP_IS_UKNOWN,
                       top_barcode = None,
                       bottom_barcode = None,
@@ -181,12 +184,12 @@ class Message:
         self.set("Length", length)
         self.set("Width", width)
         self.set("Thickness", thickness)
-        self.set("ConveyorSpeed", conveyor_speed)        
+        self.set("ConveyorSpeed", conveyor_speed)
         self.set("TopClearanceHeight", top_clearance_height)
         self.set("BottomClearanceHeight", bottom_clearance_height)
         self.set("Weight", weight)
         self.set("WorkOrderId", work_order_id)
-        return self  
+        return self
 
     @classmethod
     def RevokeBoardAvailable(cls):
@@ -217,7 +220,7 @@ class Message:
         self.set("Length", length)
         self.set("Width", width)
         self.set("Thickness", thickness)
-        self.set("ConveyorSpeed", conveyor_speed)        
+        self.set("ConveyorSpeed", conveyor_speed)
         self.set("TopClearanceHeight", top_clearance_height)
         self.set("BottomClearanceHeight", bottom_clearance_height)
         self.set("Weight", weight)
@@ -231,11 +234,11 @@ class Message:
 
     @classmethod
     def StartTransport(cls,
-                       board_id, 
+                       board_id,
                        conveyor_speed = None):
         self = cls(None, "StartTransport")
         self.set("BoardId", board_id)
-        self.set("ConveyorSpeed", conveyor_speed)        
+        self.set("ConveyorSpeed", conveyor_speed)
         return self
 
     @classmethod
