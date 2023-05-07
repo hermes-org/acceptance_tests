@@ -18,7 +18,7 @@ from test_cases import hermes_testcase
 from test_cases import create_upstream_context, create_upstream_context_with_handshake
 from test_cases import SYSTEM_UNDER_TEST_HOST, SYSTEM_UNDER_TEST_DOWNSTREAM_PORT
 from ipc_hermes.connections import UpstreamConnection
-from ipc_hermes.messages import Message, MAX_MESSAGE_SIZE
+from ipc_hermes.messages import Message, Tag, MAX_MESSAGE_SIZE
 
 @hermes_testcase
 def test_connect_disconnect_n_times():
@@ -26,7 +26,7 @@ def test_connect_disconnect_n_times():
     for _ in range(10):
         with create_upstream_context():
             pass
-    assert True
+
 
 @hermes_testcase
 def test_connect_service_description_disconnect_n_times():
@@ -36,7 +36,7 @@ def test_connect_service_description_disconnect_n_times():
     for _ in range(10):
         with create_upstream_context() as ctxt:
             ctxt.send_msg(Message.ServiceDescription("AcceptanceTest", 2))
-    assert True
+
 
 @hermes_testcase
 @pytest.mark.testdriver
@@ -86,8 +86,8 @@ def test_maximum_message_size():
         extend_by = MAX_MESSAGE_SIZE - len(msg_bytes)
         msg_bytes = msg_bytes[:splitat] + extend_by * b"x" + msg_bytes[splitat:]
         ctxt.send_tag_and_bytes(msg.tag, msg_bytes)
-        ctxt.expect_message("ServiceDescription")
-    assert True
+        ctxt.expect_message(Tag.SERVICE_DESCRIPTION)
+
 
 @hermes_testcase
 def test_multiple_messages_per_packet():
@@ -101,8 +101,8 @@ def test_multiple_messages_per_packet():
         service_description = Message.ServiceDescription("DownstreamId", 1)
         msg_bytes = check_alive.to_bytes() + service_description.to_bytes() + check_alive.to_bytes()
         ctxt.send_tag_and_bytes(service_description.tag, msg_bytes)
-        ctxt.expect_message("ServiceDescription")
-    assert True
+        ctxt.expect_message(Tag.SERVICE_DESCRIPTION)
+
 
 @hermes_testcase
 def xtest_terminate_on_illegal_message():
@@ -114,7 +114,7 @@ def xtest_terminate_on_illegal_message():
         # optionally a Notification can be sent before closing
         try:
             ctxt.receive_data()
-            ctxt.expect_message("Notification")
+            ctxt.expect_message(Tag.NOTIFICATION)
             ctxt.close()
             raise ValueError("illegal message erroneously accepted")
         except Exception as exc:
@@ -126,7 +126,7 @@ def xtest_terminate_on_illegal_message():
                 # optionally a Notification can be sent before closing
                 try:
                     ctxt.receive_data()
-                    ctxt.expect_message("Notification")
+                    ctxt.expect_message(Tag.NOTIFICATION)
                     ctxt.close()
                     raise ValueError("illegal message erroneously accepted after handshake") from exc
                 except:

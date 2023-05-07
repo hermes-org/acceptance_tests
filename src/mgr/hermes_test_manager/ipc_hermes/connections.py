@@ -71,20 +71,20 @@ class UpstreamConnection:
         """Call recv(0) on the socket to trigger a read event."""
         self._socket.recv(0)
 
-    def send_msg(self, msg:Message):
+    def send_msg(self, msg:Message) -> int:
         """Send a message to the downstream interface."""
         self._log.debug('Sending: %s', msg.tag)
         self._state_machine.on_send_tag(msg.tag)
         return self._socket.send(msg.to_bytes())
 
-    def send_tag_and_bytes(self, tag:Tag, msg_bytes:bytes):
+    def send_tag_and_bytes(self, tag:Tag, msg_bytes:bytes) -> int:
         """Send a byte message to the downstream interface. 
            For testing only."""
         self._log.debug('Sending bytes: %s', tag)
         self._state_machine.on_send_tag(tag)
         return self._socket.send(msg_bytes)
 
-    def expect_message(self, tag, timeout_secs=RECEIVE_TIMEOUT):
+    def expect_message(self, tag, timeout_secs=RECEIVE_TIMEOUT) -> Message:
         """Wait for a message with the given tag while ignoring other messages.
            For testing only.
         """
@@ -108,7 +108,7 @@ class UpstreamConnection:
                 if delta.total_seconds() > timeout_secs:
                     raise ConnectionLost(f"Expected message <{tag}>, but timed out after {timeout_secs} seconds") from exc
 
-    def _get_next_message(self):
+    def _get_next_message(self) -> bool:
         """Get the next message from the socket."""
         while True:
             received = self._socket.recv(BUFFERSIZE)

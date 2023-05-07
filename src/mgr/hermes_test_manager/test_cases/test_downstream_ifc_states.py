@@ -3,7 +3,7 @@
 import pytest
 
 from test_cases import hermes_testcase, create_upstream_context_with_handshake
-from ipc_hermes.messages import Message, TransferState
+from ipc_hermes.messages import Message, Tag, TransferState
 
 @hermes_testcase
 @pytest.mark.testdriver
@@ -15,7 +15,7 @@ def test_terminate_on_unexpected_revoke_board_available():
         # optionally a Notification can be sent before closing
         try:
             ctxt.receive_data()
-            ctxt.expect_message("Notification")
+            ctxt.expect_message(Tag.NOTIFICATION)
             ctxt.close()
             raise ValueError("RevokeBoardAvailable erroneously accepted after handshake")
         except:
@@ -32,7 +32,7 @@ def test_terminate_on_unexpected_revoke_machine_ready():
         # optionally a Notification can be sent before closing
         try:
             ctxt.receive_data()
-            ctxt.expect_message("Notification")
+            ctxt.expect_message(Tag.NOTIFICATION)
             ctxt.close()
             raise ValueError("RevokeMachineReady erroneously accepted after handshake")
         except:
@@ -48,7 +48,7 @@ def test_terminate_on_unexpected_transport_finished():
         # optionally a Notification can be sent before closing
         try:
             ctxt.receive_data()
-            ctxt.expect_message("Notification")
+            ctxt.expect_message(Tag.NOTIFICATION)
             ctxt.close()
             raise ValueError("TransportFinished erroneously accepted after handshake")
         except:
