@@ -14,10 +14,10 @@
 """
 import pytest
 
-from test_cases import hermes_testcase
+from test_cases import hermes_testcase, get_log, CallbackManager
 from test_cases import create_upstream_context, create_upstream_context_with_handshake
-from test_cases import SYSTEM_UNDER_TEST_HOST, SYSTEM_UNDER_TEST_DOWNSTREAM_PORT
-from ipc_hermes.connections import UpstreamConnection
+
+
 from ipc_hermes.messages import Message, Tag, MAX_MESSAGE_SIZE
 
 @hermes_testcase
@@ -46,30 +46,24 @@ def test_connect_handshake_disconnect():
         pass
     assert True
 
-# TODO: This test is not working as expected, original code returned success due to a bug
-# when opening a second connection this way the first connection is closed
-# @hermes_testcase
+@hermes_testcase
 def test_connect_2_times():
-    """Test to connect twice. Second connection should be rejected."""
-    uc1 = UpstreamConnection()
-    try:
-        uc1.connect(SYSTEM_UNDER_TEST_HOST, SYSTEM_UNDER_TEST_DOWNSTREAM_PORT)
-    except:
-        uc1.close()
-        raise
+    """Test to connect twice. Second connection should be rejected and notification sent."""
+    msg = None
+    with create_upstream_context() as ctxt1:
 
-    uc2 = UpstreamConnection()
-    try:
-        uc2.connect(SYSTEM_UNDER_TEST_HOST, SYSTEM_UNDER_TEST_DOWNSTREAM_PORT)
-    except ConnectionRefusedError:
-        uc1.close()
-        uc2.close()
-        assert True
-        return
+        with create_upstream_context() as ctxt2:
+            msg = ctxt2.expect_message(Tag.NOTIFICATION)
 
-    uc1.close()
-    uc2.close()
-    raise ValueError("second connection was accepted")
+        # verify that ctxt1 still works
+        ctxt1.send_msg(Message.ServiceDescription("AcceptanceTest", 2))
+
+    assert msg.data.get('NotificationCode') == '2'
+    # TODO: recommended warning level?
+    if msg.data.get('Severity') != '2':
+        get_log().warning('%s: Notification was sent but Severity is not 2 (Error), recieved %s',
+                          'test_connect_2_times', msg.data.get('Severity'))
+
 
 @hermes_testcase
 def test_maximum_message_size():

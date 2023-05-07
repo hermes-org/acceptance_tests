@@ -1,6 +1,7 @@
 """Test case decorators and callback manager."""
 
 from contextlib import contextmanager
+import logging
 import pytest
 
 from ipc_hermes.connections import UpstreamConnection
@@ -10,6 +11,19 @@ SYSTEM_UNDER_TEST_HOST = '127.0.0.1'
 SYSTEM_UNDER_TEST_DOWNSTREAM_PORT = 50101
 
 _ALL_TEST_CASES = {}
+_LANE_ID = 1
+
+def get_log():
+    return logging.getLogger('test_cases')
+
+@property
+def lane_id() -> str:
+    """Lane ID used in tests"""
+    return _LANE_ID
+
+@lane_id.setter
+def lane_id(value:str):
+    _lane_id = value
 
 def hermes_testcase(func):
     """Decorator for test cases. Should be kept clean to not interfere with pytest.
@@ -92,7 +106,7 @@ def create_upstream_context(host=SYSTEM_UNDER_TEST_HOST,
         raise
 
 @contextmanager
-def create_upstream_context_with_handshake(host = "localhost",
+def create_upstream_context_with_handshake(host = SYSTEM_UNDER_TEST_HOST,
                                            port = SYSTEM_UNDER_TEST_DOWNSTREAM_PORT):
     """Create a horizontal channel upstream connection context
         and do the ServiceDescription handshake.
