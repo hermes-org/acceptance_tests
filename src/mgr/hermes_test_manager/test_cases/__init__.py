@@ -42,6 +42,7 @@ class CallbackManager():
     """Singelton callback manager for test cases."""
     _instance = None
     _callback = None
+    _include_handshake = False
 
     def __new__(cls):
         if cls._instance is None:
@@ -64,6 +65,15 @@ class CallbackManager():
             pytest.skip("missing callback")
         else:
             self._callback(*args, **kwargs)
+
+    @property
+    def include_handshake(self) -> bool:
+        """Run callback for the ServeDescription message to remind users of Hermes TestDriver"""
+        return self._include_handshake
+
+    @include_handshake.setter
+    def include_handshake(self, value:bool):
+        self._include_handshake = value
 
 ###############################################################
 # context managers
@@ -91,6 +101,10 @@ def create_upstream_context_with_handshake(host = "localhost",
     try:
         connection.connect(host, port)
         connection.send_msg(Message.ServiceDescription("AcceptanceTest", 2))
+        if CallbackManager().include_handshake:
+            CallbackManager().run_callback(__name__,
+                                            'Action required: Send ServiceDescription')
+
         connection.expect_message("ServiceDescription")
         yield connection
         connection.close()
