@@ -11,19 +11,10 @@ SYSTEM_UNDER_TEST_HOST = '127.0.0.1'
 SYSTEM_UNDER_TEST_DOWNSTREAM_PORT = 50101
 
 _ALL_TEST_CASES = {}
-_LANE_ID = 1
 
 def get_log():
     return logging.getLogger('test_cases')
 
-@property
-def lane_id() -> str:
-    """Lane ID used in tests"""
-    return _LANE_ID
-
-@lane_id.setter
-def lane_id(value:str):
-    _lane_id = value
 
 def hermes_testcase(func):
     """Decorator for test cases. Should be kept clean to not interfere with pytest.
@@ -35,7 +26,10 @@ def hermes_testcase(func):
         function: Decorated test case function.
     """
     def wrapper():
-        return func()
+        EnvironmentManager().optional_start_of_test_callback()
+        retval = func()
+        EnvironmentManager().optional_end_of_test_callback()
+        return retval
 
     func_name = func.__name__
     if _ALL_TEST_CASES.get(func_name) is not None:
@@ -52,15 +46,17 @@ def get_test_dictionary() -> dict:
     return _ALL_TEST_CASES
 
 
-class CallbackManager():
+class EnvironmentManager():
     """Singelton callback manager for test cases."""
     _instance = None
     _callback = None
+    _callback_used = False
     _include_handshake = False
+    _lane_id = "1"
 
     def __new__(cls):
         if cls._instance is None:
-            cls._instance = super(CallbackManager, cls).__new__(cls)
+            cls._instance = super(EnvironmentManager, cls).__new__(cls)
         return cls._instance
 
     def register_callback(self, func):
@@ -78,6 +74,7 @@ class CallbackManager():
         if self._callback is None:
             pytest.skip("missing callback")
         else:
+            self._callback_used = True
             self._callback(*args, **kwargs)
 
     @property
@@ -88,6 +85,31 @@ class CallbackManager():
     @include_handshake.setter
     def include_handshake(self, value:bool):
         self._include_handshake = value
+
+    @property
+    def lane_id(self) -> str:
+        """Lane ID used in tests"""
+        return self._lane_id
+
+    @lane_id.setter
+    def lane_id(self, value:str):
+        self._lane_id = value
+
+    def service_description_message(self) -> Message:
+        """Return ServiceDescription message"""
+        return Message.ServiceDescription("AcceptanceTest", self.lane_id)
+
+    def optional_start_of_test_callback(self) -> None:
+        """Send optional callback before test is executed
+           otherwise just reset callback_used flag
+        """
+        self._callback_used = False
+
+    def optional_end_of_test_callback(self) -> None:
+        """Send a final callback when test is done"""
+        if self._callback_used:
+            self.run_callback(__name__, 'Done.')
+
 
 ###############################################################
 # context managers
@@ -112,12 +134,12 @@ def create_upstream_context_with_handshake(host = SYSTEM_UNDER_TEST_HOST,
         and do the ServiceDescription handshake.
     """
     connection = UpstreamConnection()
+    env = EnvironmentManager()
     try:
         connection.connect(host, port)
-        connection.send_msg(Message.ServiceDescription("AcceptanceTest", 2))
-        if CallbackManager().include_handshake:
-            CallbackManager().run_callback(__name__,
-                                            'Action required: Send ServiceDescription')
+        connection.send_msg(EnvironmentManager().service_description_message())
+        if env.include_handshake:
+            env.run_callback(__name__, 'Action required: Send ServiceDescription')
 
         connection.expect_message("ServiceDescription")
         yield connection

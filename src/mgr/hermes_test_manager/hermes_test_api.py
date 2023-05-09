@@ -9,7 +9,7 @@ sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 
 # pylint: disable=wrong-import-position
 from test_cases import get_test_dictionary
-from test_cases import CallbackManager
+from test_cases import EnvironmentManager
 
 # imports are needed to locate available tests but not used directly by API
 # pylint: disable=unused-import
@@ -31,7 +31,7 @@ def available_tests() -> list:
     """Return a list with names of available tests."""
     return list(get_test_dictionary())
 
-def run_test(testcase: str, callback=None) -> bool:
+def run_test(testcase: str, callback=None, verbose=False) -> bool:
     """Run a single test case.
 
     Args:
@@ -40,9 +40,10 @@ def run_test(testcase: str, callback=None) -> bool:
 
     Return: True if the test case was found and executed, False otherwise.
     """
+    EnvironmentManager().include_handshake = verbose
     if callback is not None:
         # TODO verify callback when final format decided
-        CallbackManager().register_callback(callback)
+        EnvironmentManager().register_callback(callback)
 
     if isinstance(testcase, tuple):
         # allow using a tuple from get_test_dictionary() as testcase

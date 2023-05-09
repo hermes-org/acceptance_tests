@@ -2,7 +2,7 @@
 
 import pytest
 
-from test_cases import hermes_testcase, CallbackManager
+from test_cases import hermes_testcase, EnvironmentManager
 
 @hermes_testcase
 def test1():
@@ -24,6 +24,6 @@ def test3():
 
 def test4():
     """Test 4."""
-    CallbackManager().run_callback()
+    EnvironmentManager().run_callback()
     print('test4')
     assert True

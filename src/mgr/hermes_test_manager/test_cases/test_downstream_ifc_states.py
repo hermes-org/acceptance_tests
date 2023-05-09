@@ -3,6 +3,7 @@
 import pytest
 
 from test_cases import hermes_testcase, create_upstream_context_with_handshake
+from test_cases import EnvironmentManager
 from ipc_hermes.messages import Message, Tag, TransferState
 
 @hermes_testcase
@@ -14,6 +15,9 @@ def test_terminate_on_unexpected_revoke_board_available():
         # other end has to close connection so check if socked is dead now,
         # optionally a Notification can be sent before closing
         try:
+            EnvironmentManager().run_callback(__name__,
+                                       'Action required: Send Notification',
+                                       msg=Tag.NOTIFICATION)
             ctxt.receive_data()
             ctxt.expect_message(Tag.NOTIFICATION)
             ctxt.close()
@@ -31,6 +35,10 @@ def test_terminate_on_unexpected_revoke_machine_ready():
         # other end has to close connection so check if socked is dead now,
         # optionally a Notification can be sent before closing
         try:
+            # TODO: Note that TestDriver automatically sends Notification in this specific case
+            EnvironmentManager().run_callback(__name__,
+                                       'Action required: Send Notification',
+                                       msg=Tag.NOTIFICATION)
             ctxt.receive_data()
             ctxt.expect_message(Tag.NOTIFICATION)
             ctxt.close()
@@ -47,6 +55,9 @@ def test_terminate_on_unexpected_transport_finished():
         # other end has to close connection so check if socked is dead now,
         # optionally a Notification can be sent before closing
         try:
+            EnvironmentManager().run_callback(__name__,
+                                       'Action required: Send Notification',
+                                       msg=Tag.NOTIFICATION)
             ctxt.receive_data()
             ctxt.expect_message(Tag.NOTIFICATION)
             ctxt.close()

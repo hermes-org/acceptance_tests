@@ -14,7 +14,7 @@
 """
 import pytest
 
-from test_cases import hermes_testcase, get_log, CallbackManager
+from test_cases import hermes_testcase, get_log, EnvironmentManager
 from test_cases import create_upstream_context, create_upstream_context_with_handshake
 
 
@@ -35,16 +35,22 @@ def test_connect_service_description_disconnect_n_times():
     """
     for _ in range(10):
         with create_upstream_context() as ctxt:
-            ctxt.send_msg(Message.ServiceDescription("AcceptanceTest", 2))
+            ctxt.send_msg(EnvironmentManager().service_description_message())
 
 
 @hermes_testcase
 @pytest.mark.testdriver
 def test_connect_handshake_disconnect():
     """Test connect, send ServiceDescription, wait for answer, disconnect."""
-    with create_upstream_context_with_handshake():
-        pass
-    assert True
+    with create_upstream_context() as ctxt:
+        env = EnvironmentManager()
+        ctxt.send_msg(env.service_description_message())
+        if env.include_handshake:
+            env.run_callback(__name__, 'Action required: Send ServiceDescription')
+
+        msg = ctxt.expect_message(Tag.SERVICE_DESCRIPTION)
+        assert msg.data.get('LaneId') == env.lane_id
+
 
 @hermes_testcase
 def test_connect_2_times():
@@ -56,7 +62,7 @@ def test_connect_2_times():
             msg = ctxt2.expect_message(Tag.NOTIFICATION)
 
         # verify that ctxt1 still works
-        ctxt1.send_msg(Message.ServiceDescription("AcceptanceTest", 2))
+        ctxt1.send_msg(EnvironmentManager().service_description_message())
 
     assert msg.data.get('NotificationCode') == '2'
     # TODO: recommended warning level?
@@ -71,7 +77,8 @@ def test_maximum_message_size():
        Success requires that the system under test responds with its own ServiceDescription.
     """
     with create_upstream_context() as ctxt:
-        msg = Message.ServiceDescription("DownstreamId", 1)
+        env = EnvironmentManager()
+        msg = Message.ServiceDescription("DownstreamId", env.lane_id)
         msg_bytes = msg.to_bytes()
         splitat = msg_bytes.find(b"LaneId=")
         dummy_attr = b'HermesAcceptanceTestDummyAttributeId="" '
@@ -80,6 +87,9 @@ def test_maximum_message_size():
         extend_by = MAX_MESSAGE_SIZE - len(msg_bytes)
         msg_bytes = msg_bytes[:splitat] + extend_by * b"x" + msg_bytes[splitat:]
         ctxt.send_tag_and_bytes(msg.tag, msg_bytes)
+
+        if env.include_handshake:
+            env.run_callback(__name__, 'Action required: Send ServiceDescription')
         ctxt.expect_message(Tag.SERVICE_DESCRIPTION)
 
 
@@ -91,10 +101,14 @@ def test_multiple_messages_per_packet():
        (None of the CheckAlive messages should be answered.)
     """
     with create_upstream_context() as ctxt:
+        env = EnvironmentManager()
         check_alive = Message.CheckAlive()
-        service_description = Message.ServiceDescription("DownstreamId", 1)
+        service_description = Message.ServiceDescription("DownstreamId", env.lane_id)
         msg_bytes = check_alive.to_bytes() + service_description.to_bytes() + check_alive.to_bytes()
         ctxt.send_tag_and_bytes(service_description.tag, msg_bytes)
+
+        if env.include_handshake:
+            env.run_callback(__name__, 'Action required: Send ServiceDescription')
         ctxt.expect_message(Tag.SERVICE_DESCRIPTION)
 
 

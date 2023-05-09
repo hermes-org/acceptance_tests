@@ -14,7 +14,7 @@
     this is controlled by host/port configuration.
 """
 from test_cases import hermes_testcase, create_upstream_context_with_handshake
-from test_cases import CallbackManager
+from test_cases import EnvironmentManager
 from ipc_hermes.messages import Tag, Message, TransferState
 
 
@@ -26,7 +26,7 @@ def test_complete_board_transfer_from_sut():
         ctxt.send_msg(Message.MachineReady())
 
         # ask for external agent to signal board available
-        CallbackManager().run_callback(__name__,
+        EnvironmentManager().run_callback(__name__,
                                        'Action required: Send BoardAvailable',
                                        msg=Tag.BOARD_AVAILABLE)
         board_available = ctxt.expect_message(Tag.BOARD_AVAILABLE)
@@ -36,7 +36,7 @@ def test_complete_board_transfer_from_sut():
         ctxt.send_msg(Message.StartTransport(board_id))
 
         # ask for external agent to send board and signal when board has left upstream
-        CallbackManager().run_callback(__name__,
+        EnvironmentManager().run_callback(__name__,
                                        "Action required: Send TransportFinished",
                                        msg=Tag.TRANSPORT_FINISHED)
         ctxt.expect_message(Tag.TRANSPORT_FINISHED)

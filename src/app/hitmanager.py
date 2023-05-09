@@ -55,7 +55,8 @@ class Hitmanager(Widget):
 
     def _run_selected_test(self, selected_test):
         self._update_current_test_label(selected_test)
-        result = hermes_test_api.run_test(selected_test, self.test_callback)
+        result = hermes_test_api.run_test(selected_test, self.test_callback, True)
+        self.ids.instruction_label.text = ''
         if result:
             self.ids.current_test_label.background_color = (0, 1, 0, 1)
         else:
