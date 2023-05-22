@@ -3,14 +3,11 @@
     >>>> Board transport direction >>>>
     ----------+          +----------
        System |          |  this
-       under  | -------- |  code
+       under  | -------> |  code
        test   |          |
     ----------+          +----------
     thus an upstream connection is used by this test code 
     to send messages to the system under test.
-
-    The test code does not know which lane interface is used,
-    this is controlled by host/port configuration.
 """
 import pytest
 
@@ -24,7 +21,7 @@ from ipc_hermes.messages import Message, Tag, MAX_MESSAGE_SIZE
 def test_connect_disconnect_n_times():
     """Test connect and disconnect n times. No ServiceDescription sent."""
     for _ in range(10):
-        with create_upstream_context():
+        with create_upstream_context(receive=False):
             pass
 
 
@@ -34,7 +31,7 @@ def test_connect_service_description_disconnect_n_times():
        Send ServiceDescription but don't wait for answer before closing connection.
     """
     for _ in range(10):
-        with create_upstream_context() as ctxt:
+        with create_upstream_context(receive=False) as ctxt:
             ctxt.send_msg(EnvironmentManager().service_description_message())
 
 
@@ -56,7 +53,7 @@ def test_connect_handshake_disconnect():
 def test_connect_2_times():
     """Test to connect twice. Second connection should be rejected and notification sent."""
     msg = None
-    with create_upstream_context() as ctxt1:
+    with create_upstream_context(receive=False) as ctxt1:
 
         with create_upstream_context() as ctxt2:
             msg = ctxt2.expect_message(Tag.NOTIFICATION)
@@ -121,7 +118,6 @@ def xtest_terminate_on_illegal_message():
         # other end has to close connection so check if socked is dead now,
         # optionally a Notification can be sent before closing
         try:
-            ctxt.receive_data()
             ctxt.expect_message(Tag.NOTIFICATION)
             ctxt.close()
             raise ValueError("illegal message erroneously accepted")
@@ -133,7 +129,6 @@ def xtest_terminate_on_illegal_message():
                 # other end has to close connection so check if socked is dead now,
                 # optionally a Notification can be sent before closing
                 try:
-                    ctxt.receive_data()
                     ctxt.expect_message(Tag.NOTIFICATION)
                     ctxt.close()
                     raise ValueError("illegal message erroneously accepted after handshake") from exc

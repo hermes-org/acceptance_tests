@@ -74,7 +74,8 @@ class Message:
         return self._data.tag
 
     def __repr__(self):
-        return ET.tostring(self._root, encoding="unicode") # only unicode encoding returns a string
+        xml_string = ET.tostring(self._root, encoding="unicode") # only unicode encoding returns a string
+        return ET.canonicalize(xml_string, strip_text=True)
 
     def to_bytes(self):
         retval = ET.tostring(self._root) # returns bytes

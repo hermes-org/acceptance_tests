@@ -17,6 +17,7 @@ import test_cases.test_cases_dummy
 import test_cases.test_downstream_ifc
 import test_cases.test_downstream_ifc_states
 import test_cases.test_downstream_ifc_interactive
+import test_cases.test_upstream_ifc
 
 log = logging.getLogger('hermes_test_api')
 

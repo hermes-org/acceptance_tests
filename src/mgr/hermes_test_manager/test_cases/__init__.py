@@ -4,15 +4,16 @@ from contextlib import contextmanager
 import logging
 import pytest
 
-from ipc_hermes.connections import UpstreamConnection
-from ipc_hermes.messages import Message
+from ipc_hermes.connections import UpstreamConnection, DownstreamConnection
+from ipc_hermes.messages import Message, Tag
 
 SYSTEM_UNDER_TEST_HOST = '127.0.0.1'
-SYSTEM_UNDER_TEST_DOWNSTREAM_PORT = 50101
+SYSTEM_UNDER_TEST_PORT = 50101
 
 _ALL_TEST_CASES = {}
 
 def get_log():
+    """Return logger for test cases."""
     return logging.getLogger('test_cases')
 
 
@@ -52,6 +53,7 @@ class EnvironmentManager():
     _callback = None
     _callback_used = False
     _include_handshake = False
+    _machine_id = "Hermes Test API"
     _lane_id = "1"
 
     def __new__(cls):
@@ -95,9 +97,14 @@ class EnvironmentManager():
     def lane_id(self, value:str):
         self._lane_id = value
 
+    @property
+    def machine_id(self) -> str:
+        """Machine ID used in tests"""
+        return self._machine_id
+
     def service_description_message(self) -> Message:
         """Return ServiceDescription message"""
-        return Message.ServiceDescription("AcceptanceTest", self.lane_id)
+        return Message.ServiceDescription(self.machine_id, self.lane_id)
 
     def optional_start_of_test_callback(self) -> None:
         """Send optional callback before test is executed
@@ -115,13 +122,18 @@ class EnvironmentManager():
 # context managers
 
 @contextmanager
-def create_upstream_context(host=SYSTEM_UNDER_TEST_HOST,
-                            port=SYSTEM_UNDER_TEST_DOWNSTREAM_PORT):
+def create_upstream_context(receive=True,
+                            host=SYSTEM_UNDER_TEST_HOST,
+                            port=SYSTEM_UNDER_TEST_PORT):
     """Create a horizontal channel upstream connection context."""
     connection = UpstreamConnection()
     try:
         connection.connect(host, port)
+        if receive:
+            connection.start_receiving()
+        get_log().debug('Yield connection to test case')
         yield connection
+        get_log().debug('Return from test case and yield')
         connection.close()
     except:
         connection.close()
@@ -129,7 +141,7 @@ def create_upstream_context(host=SYSTEM_UNDER_TEST_HOST,
 
 @contextmanager
 def create_upstream_context_with_handshake(host = SYSTEM_UNDER_TEST_HOST,
-                                           port = SYSTEM_UNDER_TEST_DOWNSTREAM_PORT):
+                                           port = SYSTEM_UNDER_TEST_PORT):
     """Create a horizontal channel upstream connection context
         and do the ServiceDescription handshake.
     """
@@ -137,13 +149,38 @@ def create_upstream_context_with_handshake(host = SYSTEM_UNDER_TEST_HOST,
     env = EnvironmentManager()
     try:
         connection.connect(host, port)
+        connection.start_receiving()
         connection.send_msg(EnvironmentManager().service_description_message())
         if env.include_handshake:
             env.run_callback(__name__, 'Action required: Send ServiceDescription')
-
-        connection.expect_message("ServiceDescription")
+        connection.expect_message(Tag.SERVICE_DESCRIPTION)
+        get_log().debug('Yield connection to test case')
         yield connection
+        get_log().debug('Return from test case and yield')
         connection.close()
     except:
+        connection.close()
+        raise
+
+@contextmanager
+def create_downstream_context_with_handshake(host = SYSTEM_UNDER_TEST_HOST,
+                                             port = SYSTEM_UNDER_TEST_PORT):
+    """Create a horizontal channel downstream server context
+        and do the ServiceDescription handshake.
+    """
+    connection = DownstreamConnection()
+    env = EnvironmentManager()
+    try:
+        connection.connect(host, port)
+        connection.wait_for_connection(10)
+        if env.include_handshake:
+            env.run_callback(__name__, 'Action required: Send ServiceDescription')
+        connection.expect_message(Tag.SERVICE_DESCRIPTION)
+        connection.send_msg(EnvironmentManager().service_description_message())
+        get_log().debug('Yield connection to test case')
+        yield connection
+        get_log().debug('Return from yield and test case')
+        connection.close()
+    except Exception:
         connection.close()
         raise

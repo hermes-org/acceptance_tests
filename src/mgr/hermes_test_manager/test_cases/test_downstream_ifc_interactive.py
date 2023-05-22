@@ -4,14 +4,11 @@
     >>>> Board transport direction >>>>
     ----------+          +----------
        System |          |  this
-       under  | -------- |  code
+       under  | -------> |  code
        test   |          |
     ----------+          +----------
     thus an upstream connection is used by this test code 
     to send messages to the system under test.
-
-    The test code does not know which lane interface is used,
-    this is controlled by host/port configuration.
 """
 from test_cases import hermes_testcase, create_upstream_context_with_handshake
 from test_cases import EnvironmentManager
@@ -39,8 +36,8 @@ def test_complete_board_transfer_from_sut():
         EnvironmentManager().run_callback(__name__,
                                        "Action required: Send TransportFinished",
                                        msg=Tag.TRANSPORT_FINISHED)
-        ctxt.expect_message(Tag.TRANSPORT_FINISHED)
+        transport_finished = ctxt.expect_message(Tag.TRANSPORT_FINISHED)
+        board_id2 = transport_finished.data.get('BoardId')
+        assert board_id == board_id2
 
         ctxt.send_msg(Message.StopTransport(TransferState.COMPLETE, board_id))
-        ctxt.close()
-        assert True
