@@ -12,10 +12,6 @@ SYSTEM_UNDER_TEST_PORT = 50101
 
 _ALL_TEST_CASES = {}
 
-def get_log():
-    """Return logger for test cases."""
-    return logging.getLogger('test_cases')
-
 
 def hermes_testcase(func):
     """Decorator for test cases. Should be kept clean to not interfere with pytest.
@@ -59,6 +55,7 @@ class EnvironmentManager():
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(EnvironmentManager, cls).__new__(cls)
+            cls._log = logging.getLogger('test_cases')
         return cls._instance
 
     def register_callback(self, func):
@@ -78,6 +75,11 @@ class EnvironmentManager():
         else:
             self._callback_used = True
             self._callback(*args, **kwargs)
+
+    @property
+    def log(self) -> logging.Logger:
+        """Logger to be used in test_cases module (read-only)"""
+        return self._log
 
     @property
     def include_handshake(self) -> bool:
@@ -127,13 +129,14 @@ def create_upstream_context(receive=True,
                             port=SYSTEM_UNDER_TEST_PORT):
     """Create a horizontal channel upstream connection context."""
     connection = UpstreamConnection()
+    env = EnvironmentManager()
     try:
         connection.connect(host, port)
         if receive:
             connection.start_receiving()
-        get_log().debug('Yield connection to test case')
+        env.log.debug('Yield connection to test case')
         yield connection
-        get_log().debug('Return from test case and yield')
+        env.log.debug('Return from test case and yield')
         connection.close()
     except:
         connection.close()
@@ -154,9 +157,9 @@ def create_upstream_context_with_handshake(host = SYSTEM_UNDER_TEST_HOST,
         if env.include_handshake:
             env.run_callback(__name__, 'Action required: Send ServiceDescription')
         connection.expect_message(Tag.SERVICE_DESCRIPTION)
-        get_log().debug('Yield connection to test case')
+        env.log.debug('Yield connection to test case')
         yield connection
-        get_log().debug('Return from test case and yield')
+        env.log.debug('Return from test case and yield')
         connection.close()
     except:
         connection.close()
@@ -177,9 +180,9 @@ def create_downstream_context_with_handshake(host = SYSTEM_UNDER_TEST_HOST,
             env.run_callback(__name__, 'Action required: Send ServiceDescription')
         connection.expect_message(Tag.SERVICE_DESCRIPTION)
         connection.send_msg(EnvironmentManager().service_description_message())
-        get_log().debug('Yield connection to test case')
+        env.log.debug('Yield connection to test case')
         yield connection
-        get_log().debug('Return from yield and test case')
+        env.log.debug('Return from yield and test case')
         connection.close()
     except Exception:
         connection.close()

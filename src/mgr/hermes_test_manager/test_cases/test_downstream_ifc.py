@@ -11,7 +11,7 @@
 """
 import pytest
 
-from test_cases import hermes_testcase, get_log, EnvironmentManager
+from test_cases import hermes_testcase, EnvironmentManager
 from test_cases import create_upstream_context, create_upstream_context_with_handshake
 
 
@@ -52,6 +52,7 @@ def test_connect_handshake_disconnect():
 @hermes_testcase
 def test_connect_2_times():
     """Test to connect twice. Second connection should be rejected and notification sent."""
+    env = EnvironmentManager()
     msg = None
     with create_upstream_context(receive=False) as ctxt1:
 
@@ -59,12 +60,12 @@ def test_connect_2_times():
             msg = ctxt2.expect_message(Tag.NOTIFICATION)
 
         # verify that ctxt1 still works
-        ctxt1.send_msg(EnvironmentManager().service_description_message())
+        ctxt1.send_msg(env.service_description_message())
 
     assert msg.data.get('NotificationCode') == '2'
     # TODO: recommended warning level?
     if msg.data.get('Severity') != '2':
-        get_log().warning('%s: Notification was sent but Severity is not 2 (Error), recieved %s',
+        env.log.warning('%s: Notification was sent but Severity is not 2 (Error), recieved %s',
                           'test_connect_2_times', msg.data.get('Severity'))
 
 
