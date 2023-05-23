@@ -18,12 +18,19 @@ class Hitmanager(Widget):
         super().__init__(**kwargs)
 
         self._log = logging.getLogger('hitmanager')
+        self._available_tests = hermes_test_api.available_tests()
+        self._tree = self.ids.testlist_tv
 
-        tree = self.ids.testlist_tv
-        root = tree.root
-        for test_name in hermes_test_api.available_tests():
-            child_node = TreeViewLabel(text=test_name, is_leaf=True)
-            tree.add_node(child_node, root)
+        test_modules = []
+        for test_info in hermes_test_api.available_tests().values():
+            if test_info.module not in test_modules:
+                test_modules.append(test_info.module)
+                module_node = TreeViewLabel(text=test_info.module, is_leaf=False)
+                self._tree.add_node(module_node, self._tree.root)
+
+            test_node = TreeViewLabel(text=test_info.name, is_leaf=True)
+            self._tree.add_node(test_node, module_node)
+
         self._reset_ui()
 
     def treeview_touch_down(self):
@@ -34,8 +41,10 @@ class Hitmanager(Widget):
 
     def run_selected_tests(self) -> None:
         """Button press event handler to run selected tests."""
-        self._log.debug('button: run selected tests')
         selected_test = self.ids.testlist_tv.selected_node.text
+        if selected_test not in self._available_tests:
+            return
+        self._log.debug('button: run selected tests')
         self._running_ui()
         thread = Thread(target=self._run_selected_test, args=(selected_test,))
         thread.start()

@@ -2,6 +2,8 @@
 
 from contextlib import contextmanager
 import logging
+import inspect
+
 import pytest
 
 from ipc_hermes.connections import UpstreamConnection, DownstreamConnection
@@ -15,6 +17,9 @@ _ALL_TEST_CASES = {}
 
 def hermes_testcase(func):
     """Decorator for test cases. Should be kept clean to not interfere with pytest.
+       Side effect: collects all test cases in a dictionary including meta data.
+       Note! Duplicate test case names are not allowed to avoid confusion and
+             make CLI test case selection easier.
 
     Args:
         func (function): Test case function to be decorated.
@@ -31,7 +36,11 @@ def hermes_testcase(func):
     func_name = func.__name__
     if _ALL_TEST_CASES.get(func_name) is not None:
         raise NameError(f"Duplicate function declared: {func_name}")
-    _ALL_TEST_CASES[func_name] = wrapper
+
+    frame = inspect.stack()[1]
+    module = inspect.getmodule(frame[0])
+    module_name = module.__name__.rpartition('.')[-1]
+    _ALL_TEST_CASES[func_name] = [wrapper, module_name, func.__doc__]
     return wrapper
 
 def get_test_dictionary() -> dict:

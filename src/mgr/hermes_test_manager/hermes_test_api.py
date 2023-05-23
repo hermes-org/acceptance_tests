@@ -28,9 +28,23 @@ class TestResult(Enum):
     FAIL = "Fail"
 
 
-def available_tests() -> list:
-    """Return a list with names of available tests."""
-    return list(get_test_dictionary())
+class TestInfo():
+    """Test information class."""
+    def __init__(self, name: str, module: str, description: str):
+        self.name = name
+        self.module = module
+        self.description = description
+
+    def __str__(self):
+        return f"{self.module}.{self.name}"
+
+
+def available_tests() -> dict:
+    """Return a dictionary with TestInfo objects about available tests."""
+    test_infos = {}
+    for name, test_info in get_test_dictionary().items():
+        test_infos[name] = TestInfo(name, test_info[1], test_info[2])
+    return test_infos
 
 def run_test(testcase: str, callback=None, verbose=False) -> bool:
     """Run a single test case.
@@ -48,12 +62,8 @@ def run_test(testcase: str, callback=None, verbose=False) -> bool:
         # TODO verify callback when final format decided
         env.register_callback(callback)
 
-    if isinstance(testcase, tuple):
-        # allow using a tuple from get_test_dictionary() as testcase
-        func = testcase[1]()
-    else:
-        func = get_test_dictionary().get(testcase)
-
+    test_info = get_test_dictionary().get(testcase)
+    func = test_info[0]
     if func is not None:
         try:
             log.debug("Executing '%s'...", testcase)
@@ -73,5 +83,6 @@ def run_test(testcase: str, callback=None, verbose=False) -> bool:
 
 if __name__ == '__main__':
     # Print a list of available tests and some usage hints, any CLI should be in another file
-    for testName in get_test_dictionary():
-        print(testName)
+    print('Available tests:')
+    for test_name in get_test_dictionary():
+        print(test_name)
