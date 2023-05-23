@@ -48,7 +48,7 @@ class EnvironmentManager():
     _instance = None
     _callback = None
     _callback_used = False
-    _include_handshake = False
+    _execute_handshake_callback = False
     _machine_id = "Hermes Test API"
     _lane_id = "1"
 
@@ -82,13 +82,15 @@ class EnvironmentManager():
         return self._log
 
     @property
-    def include_handshake(self) -> bool:
-        """Run callback for the ServeDescription message to remind users of Hermes TestDriver"""
-        return self._include_handshake
+    def handshake_callback(self) -> bool:
+        """Execute callback also for the ServeDescription message 
+           to improve Hermes TestDriver user experiance
+        """
+        return self._execute_handshake_callback
 
-    @include_handshake.setter
-    def include_handshake(self, value:bool):
-        self._include_handshake = value
+    @handshake_callback.setter
+    def handshake_callback(self, enabled:bool):
+        self._execute_handshake_callback = enabled
 
     @property
     def lane_id(self) -> str:
@@ -154,7 +156,7 @@ def create_upstream_context_with_handshake(host = SYSTEM_UNDER_TEST_HOST,
         connection.connect(host, port)
         connection.start_receiving()
         connection.send_msg(EnvironmentManager().service_description_message())
-        if env.include_handshake:
+        if env.handshake_callback:
             env.run_callback(__name__, 'Action required: Send ServiceDescription')
         connection.expect_message(Tag.SERVICE_DESCRIPTION)
         env.log.debug('Yield connection to test case')
@@ -176,7 +178,7 @@ def create_downstream_context_with_handshake(host = SYSTEM_UNDER_TEST_HOST,
     try:
         connection.connect(host, port)
         connection.wait_for_connection(10)
-        if env.include_handshake:
+        if env.handshake_callback:
             env.run_callback(__name__, 'Action required: Send ServiceDescription')
         connection.expect_message(Tag.SERVICE_DESCRIPTION)
         connection.send_msg(EnvironmentManager().service_description_message())

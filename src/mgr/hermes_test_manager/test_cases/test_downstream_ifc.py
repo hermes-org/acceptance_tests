@@ -42,7 +42,7 @@ def test_connect_handshake_disconnect():
     with create_upstream_context() as ctxt:
         env = EnvironmentManager()
         ctxt.send_msg(env.service_description_message())
-        if env.include_handshake:
+        if env.handshake_callback:
             env.run_callback(__name__, 'Action required: Send ServiceDescription')
 
         msg = ctxt.expect_message(Tag.SERVICE_DESCRIPTION)
@@ -86,7 +86,7 @@ def test_maximum_message_size():
         msg_bytes = msg_bytes[:splitat] + extend_by * b"x" + msg_bytes[splitat:]
         ctxt.send_tag_and_bytes(msg.tag, msg_bytes)
 
-        if env.include_handshake:
+        if env.handshake_callback:
             env.run_callback(__name__, 'Action required: Send ServiceDescription')
         ctxt.expect_message(Tag.SERVICE_DESCRIPTION)
 
@@ -105,7 +105,7 @@ def test_multiple_messages_per_packet():
         msg_bytes = check_alive.to_bytes() + service_description.to_bytes() + check_alive.to_bytes()
         ctxt.send_tag_and_bytes(service_description.tag, msg_bytes)
 
-        if env.include_handshake:
+        if env.handshake_callback:
             env.run_callback(__name__, 'Action required: Send ServiceDescription')
         ctxt.expect_message(Tag.SERVICE_DESCRIPTION)
 

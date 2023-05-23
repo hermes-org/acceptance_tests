@@ -41,7 +41,7 @@ def run_test(testcase: str, callback=None, verbose=False) -> bool:
 
     Return: True if the test case was found and executed, False otherwise.
     """
-    EnvironmentManager().include_handshake = verbose
+    EnvironmentManager().handshake_callback = verbose
     if callback is not None:
         # TODO verify callback when final format decided
         EnvironmentManager().register_callback(callback)
