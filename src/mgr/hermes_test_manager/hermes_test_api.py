@@ -41,10 +41,12 @@ def run_test(testcase: str, callback=None, verbose=False) -> bool:
 
     Return: True if the test case was found and executed, False otherwise.
     """
-    EnvironmentManager().handshake_callback = verbose
+    env = EnvironmentManager()
+    env.use_handshake_callback = verbose
+    env.use_wrapper_callback = verbose
     if callback is not None:
         # TODO verify callback when final format decided
-        EnvironmentManager().register_callback(callback)
+        env.register_callback(callback)
 
     if isinstance(testcase, tuple):
         # allow using a tuple from get_test_dictionary() as testcase
@@ -65,7 +67,7 @@ def run_test(testcase: str, callback=None, verbose=False) -> bool:
             return True
 
     print(f'Called unknown test case {testcase}')
-    log.error("Finished '%s' with result: %s, %s", testcase, TestResult.FAIL.value, exc)
+    log.error("Finished '%s' with result: %s", testcase, TestResult.FAIL.value)
     return False
 
 

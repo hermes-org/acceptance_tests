@@ -31,7 +31,7 @@ def hermes_testcase(func):
     func_name = func.__name__
     if _ALL_TEST_CASES.get(func_name) is not None:
         raise NameError(f"Duplicate function declared: {func_name}")
-    _ALL_TEST_CASES[func_name] = func
+    _ALL_TEST_CASES[func_name] = wrapper
     return wrapper
 
 def get_test_dictionary() -> dict:
@@ -48,14 +48,15 @@ class EnvironmentManager():
     _instance = None
     _callback = None
     _callback_used = False
-    _execute_handshake_callback = False
+    _use_handshake_callback = False
+    _use_wrapper_callback = False
     _machine_id = "Hermes Test API"
     _lane_id = "1"
 
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(EnvironmentManager, cls).__new__(cls)
-            cls._log = logging.getLogger('test_cases')
+            cls._log = logging.getLogger(__name__)
         return cls._instance
 
     def register_callback(self, func):
@@ -74,6 +75,7 @@ class EnvironmentManager():
             pytest.skip("missing callback")
         else:
             self._callback_used = True
+            self.log.debug("Executing callback...")
             self._callback(*args, **kwargs)
 
     @property
@@ -82,15 +84,26 @@ class EnvironmentManager():
         return self._log
 
     @property
-    def handshake_callback(self) -> bool:
+    def use_handshake_callback(self) -> bool:
         """Execute callback also for the ServeDescription message 
            to improve Hermes TestDriver user experiance
         """
-        return self._execute_handshake_callback
+        return self._use_handshake_callback
 
-    @handshake_callback.setter
-    def handshake_callback(self, enabled:bool):
-        self._execute_handshake_callback = enabled
+    @use_handshake_callback.setter
+    def use_handshake_callback(self, enabled:bool):
+        self._use_handshake_callback = enabled
+
+    @property
+    def use_wrapper_callback(self) -> bool:
+        """Execute callback before and after each test case
+           to enable setup and cleanup of external systems
+        """
+        return self._use_wrapper_callback
+
+    @use_wrapper_callback.setter
+    def use_wrapper_callback(self, enabled:bool):
+        self._use_wrapper_callback = enabled
 
     @property
     def lane_id(self) -> str:
@@ -115,10 +128,15 @@ class EnvironmentManager():
            otherwise just reset callback_used flag
         """
         self._callback_used = False
+        if self._use_wrapper_callback:
+            self.run_callback(__name__, 'Start.')
 
     def optional_end_of_test_callback(self) -> None:
-        """Send a final callback when test is done"""
-        if self._callback_used:
+        """Send optional final callback when test is done
+           or anyhow, if callback was ever used
+           which improves the Jupyter user experiance
+        """
+        if self._callback_used or self._use_wrapper_callback:
             self.run_callback(__name__, 'Done.')
 
 
@@ -156,7 +174,7 @@ def create_upstream_context_with_handshake(host = SYSTEM_UNDER_TEST_HOST,
         connection.connect(host, port)
         connection.start_receiving()
         connection.send_msg(EnvironmentManager().service_description_message())
-        if env.handshake_callback:
+        if env.use_handshake_callback:
             env.run_callback(__name__, 'Action required: Send ServiceDescription')
         connection.expect_message(Tag.SERVICE_DESCRIPTION)
         env.log.debug('Yield connection to test case')
@@ -178,7 +196,7 @@ def create_downstream_context_with_handshake(host = SYSTEM_UNDER_TEST_HOST,
     try:
         connection.connect(host, port)
         connection.wait_for_connection(10)
-        if env.handshake_callback:
+        if env.use_handshake_callback:
             env.run_callback(__name__, 'Action required: Send ServiceDescription')
         connection.expect_message(Tag.SERVICE_DESCRIPTION)
         connection.send_msg(EnvironmentManager().service_description_message())

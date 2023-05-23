@@ -6,12 +6,12 @@ from hermes_test_manager import hermes_test_api
 def run_all() -> None:
     """Run all tests."""
     for test in hermes_test_api.available_tests():
-        result = hermes_test_api.run_test(test, _callback_handler)
+        result = hermes_test_api.run_test(test, _callback_handler,  verbose)
         print(f'Test {test} result: {result}')
 
 def run_test(test_name: str) -> None:
     """Run a specific test."""
-    result = hermes_test_api.run_test(test_name, _callback_handler)
+    result = hermes_test_api.run_test(test_name, _callback_handler, verbose)
     print(f'Test {test_name} result: {result}')
 
 def _callback_handler(*args, **kwargs):
@@ -21,9 +21,11 @@ def _callback_handler(*args, **kwargs):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+    parser.add_argument("-v", "--verbose", action='store_true', help="increase output verbosity")
     parser.add_argument("test", help="name of test case")
     cmd_args = parser.parse_args()
     testname = cmd_args.test
+    verbose = cmd_args.verbose
 
     print('from cli - ' + testname)
     if testname == 'all':
