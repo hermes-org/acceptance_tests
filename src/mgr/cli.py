@@ -3,6 +3,12 @@
 import argparse
 from hermes_test_manager import hermes_test_api
 
+def show_list() -> None:
+    """Show all available tests."""
+    print('Available tests:')
+    for test in hermes_test_api.available_tests():
+        print(f'  {test}')
+
 def run_all() -> None:
     """Run all tests."""
     for test in hermes_test_api.available_tests():
@@ -21,14 +27,16 @@ def _callback_handler(*args, **kwargs):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("-v", "--verbose", action='store_true', help="increase output verbosity")
-    parser.add_argument("test", help="name of test case")
+    parser.add_argument("-l", "--list", action='store_true', help="list all available test cases")
+    parser.add_argument("-v", "--verbose", action='store_true', help="increase output verbosity, recommended if Hermes Testdriver is used")
+    parser.add_argument("test", nargs='?', help="name of test case")
     cmd_args = parser.parse_args()
     testname = cmd_args.test
     verbose = cmd_args.verbose
 
-    print('from cli - ' + testname)
-    if testname == 'all':
+    if testname is None:
+        show_list()
+    elif testname == 'all':
         run_all()
     else:
         run_test(testname)
