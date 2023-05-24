@@ -1,29 +1,20 @@
 """Test cases for the upstream connection of a IPC-Hermes-9852 interface."""
 
-import pytest
-
 from test_cases import hermes_testcase, EnvironmentManager
 
 @hermes_testcase
-def test1():
-    """Test 1."""
+def test1_success():
+    """Test 1 - will allways succeed."""
     print('test1')
-    assert True
 
-def test2():
-    """Test 2."""
-    print('test2')
-    assert True
-
-@pytest.mark.skip(reason="no way of currently testing this")
 @hermes_testcase
-def test3():
-    """Test 3."""
-    print('test3')
+def test2_fail():
+    """Test 2 - will allways fail."""
+    print('test2')
     assert False
 
-def test4():
-    """Test 4."""
-    EnvironmentManager().run_callback()
-    print('test4')
-    assert True
+@hermes_testcase
+def test3_callback():
+    """Test 3 - uses the callback."""
+    print('test3')
+    EnvironmentManager().run_callback("A callback from test3")
