@@ -9,6 +9,7 @@
     thus an upstream connection is used by this test code 
     to send messages to the system under test.
 """
+import re
 import pytest
 
 from test_cases import hermes_testcase, EnvironmentManager
@@ -46,12 +47,35 @@ def test_connect_handshake_disconnect():
             env.run_callback(__name__, 'Action required: Send ServiceDescription')
 
         msg = ctxt.expect_message(Tag.SERVICE_DESCRIPTION)
-        assert msg.data.get('LaneId') == env.lane_id
+        # check Version is present & correct
+        hermes_version = msg.data.get('Version')
+        assert hermes_version is not None, 'Hermes version is missing in ServiceDescription'
+        env.run_callback(__name__, f"Info: Hermes version is {hermes_version}")
+        env.log.info('Info: Hermes version is %s', hermes_version)
+        version_regexp = r'^[1-9][0-9]{0,2}\.[0-9]{1,3}$'
+        assert re.match(version_regexp, hermes_version), \
+            'Hermes version in ServiceDescription has not in correct format xxx.yyy'
+        # check MachineId is present 
+        machine_id = msg.data.get('MachineId')
+        assert machine_id is not None, 'MachineId is missing in ServiceDescription'
+        if len(machine_id) == 0:
+            env.log.warning('Be kind to loggers, don\'t leave MachineId in ServiceDescription as empty string')
+        # check LaneId is present and non-zero
+        received_lane_id = msg.data.get('LaneId')
+        assert received_lane_id is not None, 'LaneId is missing in ServiceDescription'
+        assert str(received_lane_id).isnumeric and received_lane_id > 0, \
+            'LaneId in ServiceDescription is not greater than zero'
+        if received_lane_id != env.lane_id:
+            env.log.warning('ServiceDescription did not return same LaneId as ServiceDescription sent from test case.')
 
 
 @hermes_testcase
 def test_connect_2_times():
-    """Test to connect twice. Second connection should be rejected and notification sent."""
+    """Test that only one conenction will be accepted by the server,
+       any further connection attempts are rejected and Notification sent
+          * NotificationCode should be 2 (Connection refused)
+          * It's recommended that Severity should be 2 (Error)
+    """
     env = EnvironmentManager()
     msg = None
     with create_upstream_context(receive=False) as ctxt1:
@@ -62,17 +86,19 @@ def test_connect_2_times():
         # verify that ctxt1 still works
         ctxt1.send_msg(env.service_description_message())
 
-    assert msg.data.get('NotificationCode') == '2'
-    # TODO: recommended warning level?
+    assert msg.data.get('NotificationCode') == '2', 'NotificationCode should be 2 (Connection refused)'
     if msg.data.get('Severity') != '2':
-        env.log.warning('%s: Notification was sent but Severity is not 2 (Error), recieved %s',
-                          'test_connect_2_times', msg.data.get('Severity'))
+        env.log.warning('Notification was sent according to standard, but its recommended to use "Severity" 2 (Error), recieved %s',
+                        msg.data.get('Severity'))
 
 
 @hermes_testcase
 def test_maximum_message_size():
     """Test maximum message size by sending a ServiceDescription message of max size.
        Success requires that the system under test responds with its own ServiceDescription.
+       Side effects, this also test ability to handle
+          * a message spilt into multiple packets
+          * a message with an unknown attribute
     """
     with create_upstream_context() as ctxt:
         env = EnvironmentManager()
