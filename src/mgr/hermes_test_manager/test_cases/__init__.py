@@ -188,7 +188,7 @@ def create_upstream_context_with_handshake(host = SYSTEM_UNDER_TEST_HOST,
         connection.expect_message(Tag.SERVICE_DESCRIPTION)
         env.log.debug('Yield connection to test case')
         yield connection
-        env.log.debug('Return from test case and yield')
+        env.log.debug('Return from yield')
         connection.close()
     except:
         connection.close()
@@ -211,7 +211,7 @@ def create_downstream_context_with_handshake(host = SYSTEM_UNDER_TEST_HOST,
         connection.send_msg(EnvironmentManager().service_description_message())
         env.log.debug('Yield connection to test case')
         yield connection
-        env.log.debug('Return from yield and test case')
+        env.log.debug('Return from yield')
         connection.close()
     except Exception:
         connection.close()

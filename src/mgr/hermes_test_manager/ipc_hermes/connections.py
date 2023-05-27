@@ -10,7 +10,7 @@ import selectors
 import xml.etree.ElementTree as ET
 from datetime import datetime
 
-from ipc_hermes.messages import Message, Tag
+from ipc_hermes.messages import Message, Tag, NotificationCode, SeverityType
 from ipc_hermes.state_machine import UpstreamStateMachine, DownstreamStateMachine
 
 SOCKET_TIMEOUT = 20.0
@@ -40,6 +40,7 @@ class ClientServer:
         self.__is_shut_down = threading.Event()
         self._receive_thread = None
         self._selector = _ServerSelector()
+        self._listener_exception = None
 
     def connect(self, host:str, port:str|int) -> None:
         """Initiate the connection. To be overridden by subclasses."""
@@ -59,16 +60,23 @@ class ClientServer:
         """Send a message."""
         assert self._socket is not None, 'No connection established'
         self._log.debug('Try send: %s', str(msg))
-        self._state_machine.on_send_tag(msg.tag)
-        return self._socket.send(msg.to_bytes())
+        return self._send_bytes(msg.tag, msg.to_bytes())
 
     def send_tag_and_bytes(self, tag:Tag, msg_bytes:bytes) -> int:
         """Send a byte message to the downstream interface. 
            Allows protocol violations to be created, for testing only."""
         assert self._socket is not None, 'No connection established'
-        self._log.debug('Try send bytes: %s', tag)
+        self._log.debug('Try send %s bytes, "%s"', len(msg_bytes), tag)
+        return self._send_bytes(tag, msg_bytes)
+
+    def _send_bytes(self, tag:Tag, msg_bytes:bytes) -> int:
+        """Send a byte message to the downstream interface."""
         self._state_machine.on_send_tag(tag)
-        return self._socket.send(msg_bytes)
+        bytes_sent = self._socket.send(msg_bytes)
+        time.sleep(0.02)
+        if self._listener_exception is not None:
+            raise ConnectionLost('Listener exception', self._listener_exception)
+        return bytes_sent
 
     def expect_message(self, tag, timeout_secs=RECEIVE_TIMEOUT) -> Message:
         """Wait for a message with the given tag while ignoring other messages.
@@ -116,7 +124,9 @@ class ClientServer:
                 for key, _ in events:
                     callback = key.data
                     callback(key.fileobj)
-
+        except IOError as exc:
+            self._log.debug('IOError in listening loop: %s', exc)
+            self._listener_exception = exc
         finally:
             self.__shutdown_request = False
             self.__is_shut_down.set()
@@ -237,7 +247,9 @@ class DownstreamConnection(ClientServer):
             return
 
         self._log.debug('Refuse second connection, already connected')
-        msg = Message.Notification(2, 2, 'Connection refused because of an established connection')
+        msg = Message.Notification(NotificationCode.CONNECTION_REFUSED,
+                                   SeverityType.ERROR,
+                                   'Connection refused because of an established connection')
         request.send(msg.to_bytes())
         try:
             request.shutdown(socket.SHUT_RDWR)

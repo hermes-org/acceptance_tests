@@ -25,6 +25,20 @@ class Tag:
     GET_CONFIGURATION = "GetConfiguration"
     CURRENT_CONFIGURATION = "CurrentConfiguration"
 
+class NotificationCode:
+    PROTOCOL_ERROR = "1"
+    CONNECTION_REFUSED = "2"
+    CONNECTION_RESET = "3"
+    CONFIGURATION_ERROR = "4"
+    MACHINE_SHUTDOWN = "5"
+    BOARDFORECAST_ERROR = "6"
+
+class SeverityType:
+    FATAL = "1"
+    ERROR = "2"
+    WARNING = "3"
+    INFORMATION = "4"
+
 class CheckAliveType:
     PING = 1
     PONG = 2

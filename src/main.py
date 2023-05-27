@@ -2,23 +2,15 @@
 
 import logging
 
-from app.hitmanager import HitmanagerApp # pylint: disable=import-error
+ # pylint: disable=import-error
+from app.hitmanager import HitmanagerApp
+from mgr.hermes_test_manager.hermes_test_api import setup_default_logging
 
 LOG_FILE = "hitmanager.log"
 
 if __name__ == '__main__':
-#    formatter = logging.Formatter('{"time": "%(asctime)s.%(msecs)d", "package": "%(name)s", "level": "%(levelname)s", %(message)s}',
-#                                  '%Y-%m-%dT%H:%M:%S')
-    formatter = logging.Formatter('%(asctime)-19s.%(msecs)-3d [%(name)-15s] %(levelname)s: %(message)s',
-                                  '%Y-%m-%dT%H:%M:%S')
-    file_handler = logging.FileHandler(LOG_FILE, mode='w', encoding='utf-8')
-    file_handler.setFormatter(formatter)
-
-    for log_name in ['hermes_test_api','ipc_hermes','test_cases','hitmanager']:
-        logger = logging.getLogger(log_name)
-        logger.setLevel(logging.DEBUG)
-        logger.addHandler(file_handler)
-
-    logger.info('starting hitmanager')
+    setup_default_logging(LOG_FILE, logging.DEBUG, ['hitmanager'])
+    log = logging.getLogger('hitmanager')
+    log.info('Starting hitmanager')
     HitmanagerApp().run()
-    logger.info('exiting hitmanager')
+    log.info('Exiting hitmanager')

@@ -16,7 +16,7 @@ from test_cases import hermes_testcase, EnvironmentManager
 from test_cases import create_upstream_context, create_upstream_context_with_handshake
 
 
-from ipc_hermes.messages import Message, Tag, MAX_MESSAGE_SIZE
+from ipc_hermes.messages import Message, Tag, NotificationCode, SeverityType, MAX_MESSAGE_SIZE
 
 @hermes_testcase
 def test_connect_disconnect_n_times():
@@ -49,13 +49,13 @@ def test_connect_handshake_disconnect():
         msg = ctxt.expect_message(Tag.SERVICE_DESCRIPTION)
         # check Version is present & correct
         hermes_version = msg.data.get('Version')
-        assert hermes_version is not None, 'Hermes version is missing in ServiceDescription'
+        assert hermes_version is not None, 'IPC-Hermes version is missing in ServiceDescription'
         env.run_callback(__name__, f"Info: Hermes version is {hermes_version}")
-        env.log.info('Info: Hermes version is %s', hermes_version)
+        env.log.info('System under test states IPC-Hermes version %s', hermes_version)
         version_regexp = r'^[1-9][0-9]{0,2}\.[0-9]{1,3}$'
         assert re.match(version_regexp, hermes_version), \
-            'Hermes version in ServiceDescription has not in correct format xxx.yyy'
-        # check MachineId is present 
+            'IPC-Hermes version in ServiceDescription has not in correct format xxx.yyy'
+        # check MachineId is present
         machine_id = msg.data.get('MachineId')
         assert machine_id is not None, 'MachineId is missing in ServiceDescription'
         if len(machine_id) == 0:
@@ -63,7 +63,7 @@ def test_connect_handshake_disconnect():
         # check LaneId is present and non-zero
         received_lane_id = msg.data.get('LaneId')
         assert received_lane_id is not None, 'LaneId is missing in ServiceDescription'
-        assert str(received_lane_id).isnumeric and received_lane_id > 0, \
+        assert str(received_lane_id).isnumeric and int(received_lane_id) > 0, \
             'LaneId in ServiceDescription is not greater than zero'
         if received_lane_id != env.lane_id:
             env.log.warning('ServiceDescription did not return same LaneId as ServiceDescription sent from test case.')
@@ -82,14 +82,13 @@ def test_connect_2_times():
 
         with create_upstream_context() as ctxt2:
             msg = ctxt2.expect_message(Tag.NOTIFICATION)
+            assert msg.data.get('NotificationCode') == NotificationCode.CONNECTION_REFUSED, 'NotificationCode should be 2 (Connection refused)'
+            if msg.data.get('Severity') != SeverityType.ERROR:
+                env.log.warning('Notification was sent according to standard, but its recommended to use "Severity" 2 (Error), recieved %s',
+                                msg.data.get('Severity'))
 
         # verify that ctxt1 still works
         ctxt1.send_msg(env.service_description_message())
-
-    assert msg.data.get('NotificationCode') == '2', 'NotificationCode should be 2 (Connection refused)'
-    if msg.data.get('Severity') != '2':
-        env.log.warning('Notification was sent according to standard, but its recommended to use "Severity" 2 (Error), recieved %s',
-                        msg.data.get('Severity'))
 
 
 @hermes_testcase

@@ -17,4 +17,4 @@ def test2_fail():
 def test3_callback():
     """Test 3 - uses the callback."""
     print('test3')
-    EnvironmentManager().run_callback("A callback from test3")
+    EnvironmentManager().run_callback(__name__, "A callback from test3")

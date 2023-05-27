@@ -66,20 +66,32 @@ def run_test(testcase: str, callback=None, verbose=False) -> bool:
     func = test_info[0]
     if func is not None:
         try:
-            log.debug("Executing '%s'...", testcase)
+            log.info("Start %s...", testcase)
             func()
         except Exception as exc:
             print(f"FAILED with error: {str(exc)}")
-            log.error("Finished '%s' with result: %s, %s", testcase, TestResult.FAIL.value, exc)
+            log.error("Failed: %s, %s", testcase, exc)
             return False
         else:
-            log.info("Finished '%s' with result: %s", testcase, TestResult.PASS.value)
+            log.info("Passed: %s", testcase)
             return True
 
-    print(f'Called unknown test case {testcase}')
-    log.error("Finished '%s' with result: %s", testcase, TestResult.FAIL.value)
+    print(f'Called unknown test case: {testcase}')
+    log.error("Called unknown test case: %s", testcase)
     return False
 
+def setup_default_logging(filename: str, level=logging.INFO, extra_loggers: list=None) -> None:
+    """Optional setup of logging to file."""
+    formatter = logging.Formatter('%(asctime)-19s.%(msecs)-3d [%(name)-15s] %(levelname)s: %(message)s',
+                                  '%Y-%m-%dT%H:%M:%S')
+    file_handler = logging.FileHandler(filename, mode='w', encoding='utf-8')
+    file_handler.setFormatter(formatter)
+    loggers = ['hermes_test_api','ipc_hermes','test_cases']
+    loggers.extend(extra_loggers or [])
+    for log_name in loggers:
+        logger = logging.getLogger(log_name)
+        logger.setLevel(level)
+        logger.addHandler(file_handler)
 
 if __name__ == '__main__':
     # Print a list of available tests and some usage hints, any CLI should be in another file

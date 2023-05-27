@@ -3,6 +3,8 @@
 import argparse
 from hermes_test_manager import hermes_test_api
 
+LOG_FILE = "hitmanager.log"
+
 def show_list() -> None:
     """Show all available tests."""
     print('Available tests:')
@@ -37,6 +39,7 @@ if __name__ == '__main__':
     testname = cmd_args.test
     verbose = cmd_args.verbose
 
+    hermes_test_api.setup_default_logging(LOG_FILE)
     if testname is None:
         show_list()
     elif testname == 'all':
