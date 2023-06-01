@@ -4,10 +4,12 @@ import logging
 from threading import Thread
 
 from kivy.app import App
+from kivy.clock import Clock
 from kivy.uix.widget import Widget
-from kivy.uix.treeview import TreeViewLabel
 
-from mgr.hermes_test_manager import hermes_test_api # pylint: disable=import-error
+# pylint: disable=import-error
+from app.widgets.icon_treenode import TreeViewImageLabel
+from mgr.hermes_test_manager import hermes_test_api
 
 class Hitmanager(Widget):
     """Main widget for HitManager. So far just one window
@@ -25,23 +27,36 @@ class Hitmanager(Widget):
         for test_info in hermes_test_api.available_tests().values():
             if test_info.module not in test_modules:
                 test_modules.append(test_info.module)
-                module_node = TreeViewLabel(text=test_info.module, is_leaf=False)
+                module_node = TreeViewImageLabel(text=test_info.module, is_leaf=False)
                 self._tree.add_node(module_node, self._tree.root)
 
-            test_node = TreeViewLabel(text=test_info.name, is_leaf=True)
+            test_node = TreeViewImageLabel(text=test_info.name, is_leaf=True,
+                                           on_touch_down=self.treeview_touch_down)
             self._tree.add_node(test_node, module_node)
 
         self._reset_ui()
+        rst_text = "Welcome to Hermes 9852 Interface Test Manager\n"
+        self.ids.test_info.text = rst_text
 
-    def treeview_touch_down(self):
+    def treeview_touch_down(self, node=None, touch=None) -> bool:
         """Treeview touch down event handler
            resets ui and highlight selection but don't run test.
         """
         self._reset_ui()
+        if node is not None:
+            selected_test = node.text
+            test_info = self._available_tests.get(selected_test)
+            name = selected_test.replace('_', ' ').title()
+            rst_text = f"**{test_info.tag}**\n\n"
+            rst_text += name + "\n"
+            rst_text += "=" * len(name) + "\n\n"
+            rst_text += test_info.description
+            self.ids.test_info.text = rst_text
+        return True
 
     def run_selected_tests(self) -> None:
         """Button press event handler to run selected tests."""
-        selected_test = self.ids.testlist_tv.selected_node.text
+        selected_test = self._tree.selected_node.text
         if selected_test not in self._available_tests:
             return
         self._log.debug('button: run selected tests')
@@ -63,26 +78,33 @@ class Hitmanager(Widget):
         self.ids.instruction_label.text = instruction
 
     def _run_selected_test(self, selected_test):
-        self._update_current_test_label(selected_test)
         result = hermes_test_api.run_test(selected_test, self.test_callback, True)
-        self.ids.instruction_label.text = ''
-        if result:
-            self.ids.current_test_label.background_color = (0, 1, 0, 1)
-        else:
-            self.ids.current_test_label.background_color = (1, 0, 0, 1)
-
-    def _update_current_test_label(self, test_name):
-        self.ids.current_test_label.text = test_name
-        self.ids.current_test_label.background_color = (0.5, 0.5, 0.5, 1)
+        Clock.schedule_once(lambda _: self._done_ui(result))
 
     def _reset_ui(self):
-        """Reset user interface between tests."""
-        self._update_current_test_label('')
+        """Reset user interface. Use when changing selection."""
+        self.ids.state_label.text = ''
+        self.ids.state_label.background_color = (0.5, 0.5, 0.5, 1)
         self.ids.instruction_label.text = ''
 
     def _running_ui(self):
-        """Reset user interface between tests."""
+        """Set user interface to running state."""
+        self.ids.btn_run.disabled = True
+        self._reset_ui()
+        self.ids.state_label.text = "Running"
+        self._tree.selected_node.color = (0, 1, 1, 1)
 
+    def _done_ui(self, result: bool):
+        """Reset user interface after test."""
+        if result:
+            self.ids.state_label.text = "Success"
+            self.ids.state_label.background_color = (0, 1, 0, 1)
+            self._tree.selected_node.color = (0, 1, 0, 1)
+        else:
+            self.ids.state_label.text = "Fail"
+            self.ids.state_label.background_color = (1, 0, 0, 1)
+            self._tree.selected_node.color = (1, 0, 0, 1)
+        self.ids.btn_run.disabled = False
 
 class HitmanagerApp(App):
     """Main application class for HitManager."""

@@ -1,0 +1,9 @@
+#:kivy 1.0.9
+
+<TreeViewImageLabel>:
+    height: max(lbl.texture_size[1] + dp(10), dp(24))
+        
+    Label:
+        size_hint: (.9, 1)
+        id:lbl
+        text_size: self.width, None

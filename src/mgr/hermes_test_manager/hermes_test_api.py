@@ -2,6 +2,7 @@
 import os
 import sys
 import logging
+import hashlib
 from enum import Enum
 
 # ugly hack to allow GUI app to use hermes_test_manager package without installing it
@@ -28,11 +29,15 @@ class TestResult(Enum):
 
 
 class TestInfo():
-    """Test information class."""
+    """Test information class.
+       The tag is a short identifier for the test case but
+       its value is not guaranteed to be unique.
+    """
     def __init__(self, name: str, module: str, description: str):
         self.name = name
         self.module = module
         self.description = description
+        self.tag = "H" + hashlib.md5(bytearray(name, 'utf-8')).hexdigest()[:4]
 
     def __str__(self):
         return f"{self.module}.{self.name}"

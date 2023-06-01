@@ -1,8 +1,6 @@
 #:kivy 1.0.9
 
 <Hitmanager>:
-    instruction_label: instruction_label
-
     BoxLayout:
         size: root.width, root.height
         orientation: 'horizontal'
@@ -12,13 +10,23 @@
         TreeView:
             id: testlist_tv
             hide_root: True
-            on_touch_down: root.treeview_touch_down()
 
         BoxLayout:
             orientation: 'vertical'
 
+            RstDocument:
+                id: test_info
+                base_font_size: 24
+                size_hint: (1, 1)
+                color: (0, 0, 0, 1)
+                background_color: (0.5, 0.9, 0.9, 1)
+                scroll_type: ['bars', 'content']
+                bar_width: 10
+
             Label:
-                id: current_test_label
+                id: state_label
+                font_size: 24
+                bold: True
                 size_hint: (1, 0.2)
                 color: (0, 0, 0, 1)
                 background_color: (0.5, 0.5, 0.5, 1)
@@ -55,6 +63,7 @@
 
 
             Button:
+                id: btn_run
                 text: "Run selected test cases"
                 size_hint: (1, 0.2)
                 on_press: root.run_selected_tests()
