@@ -195,6 +195,23 @@ def create_upstream_context_with_handshake(host = SYSTEM_UNDER_TEST_HOST,
         raise
 
 @contextmanager
+def create_downstream_context(host = SYSTEM_UNDER_TEST_HOST,
+                              port = SYSTEM_UNDER_TEST_PORT):
+    """Create a horizontal channel downstream server context"""
+    connection = DownstreamConnection()
+    env = EnvironmentManager()
+    try:
+        connection.connect(host, port)
+        connection.wait_for_connection(10)
+        env.log.debug('Yield connection to test case')
+        yield connection
+        env.log.debug('Return from yield')
+        connection.close()
+    except Exception:
+        connection.close()
+        raise
+
+@contextmanager
 def create_downstream_context_with_handshake(host = SYSTEM_UNDER_TEST_HOST,
                                              port = SYSTEM_UNDER_TEST_PORT):
     """Create a horizontal channel downstream server context

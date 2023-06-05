@@ -1,4 +1,5 @@
 """Test cases for the upstream connection of an IPC-Hermes-9852 interface.
+    where interaction with the system under test using the API callback function is required.
     
         >>>> Board transport direction >>>>
         ----------+          +----------

@@ -15,7 +15,8 @@ import pytest
 from test_cases import hermes_testcase, EnvironmentManager
 from test_cases import create_upstream_context, create_upstream_context_with_handshake
 
-from ipc_hermes.messages import Message, Tag, TransferState, NotificationCode, SeverityType, MAX_MESSAGE_SIZE
+from ipc_hermes.messages import MAX_MESSAGE_SIZE
+from ipc_hermes.messages import Message, Tag, TransferState, NotificationCode, SeverityType
 from ipc_hermes.connections import ConnectionLost
 
 @hermes_testcase
@@ -58,7 +59,7 @@ def test_connect_handshake_disconnect():
         # check MachineId is present
         machine_id = msg.data.get('MachineId')
         assert machine_id is not None, 'MachineId is missing in ServiceDescription'
-        if len(machine_id) == 0:
+        if len(machine_id.strip()) == 0:
             env.log.warning('Be kind to loggers, don\'t leave MachineId in ServiceDescription as empty string')
         # check LaneId is present and non-zero
         received_lane_id = msg.data.get('LaneId')
@@ -184,6 +185,9 @@ def test_terminate_on_wrong_message_in_not_available_not_ready():
             notification = ctxt.expect_message(Tag.NOTIFICATION)
             assert notification.data.get('NotificationCode') == NotificationCode.PROTOCOL_ERROR, \
                 'NotificationCode should be 1 (Protocol error)'
+            if notification.data.get('Severity') != SeverityType.FATAL:
+                env.log.warning('Notification was sent according to standard, but its recommended to use "Severity" 1 (Fatal error), recieved %s',
+                                notification.data.get('Severity'))
             # other end has to close connection so check if socked is dead now
             try:
                 ctxt.send_msg(Message.Notification(NotificationCode.MACHINE_SHUTDOWN,
