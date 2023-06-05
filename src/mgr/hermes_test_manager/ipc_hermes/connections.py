@@ -196,6 +196,7 @@ class DownstreamConnection(ClientServer):
     """
     def __init__(self):
         self._server_socket = None
+        self._client_address = None
         super().__init__()
 
     def connect(self, host:str, port:str|int) -> None:
@@ -217,7 +218,7 @@ class DownstreamConnection(ClientServer):
         super()._start_receiving()
         self._log.debug('Downstream server successfully started')
 
-    def wait_for_connection(self, timeout_secs=SOCKET_TIMEOUT) -> None:
+    def wait_for_connection(self, timeout_secs=SOCKET_TIMEOUT) -> str:
         """Wait for a connection to the downstream server.
            _socket will be set from listening thread and handle_accept.
         """
@@ -231,6 +232,7 @@ class DownstreamConnection(ClientServer):
                 raise ConnectionLost(f"Upstream client did not connect within {timeout_secs} seconds")
             time.sleep(0.1)
         self._log.debug('Upstream client connected after %s seconds', delta.total_seconds())
+        return str(self._client_address)
 
 
     def _handle_accept(self, sock:socket) -> None:
@@ -243,6 +245,7 @@ class DownstreamConnection(ClientServer):
         if self._socket is None:
             self._socket = request
             self._selector.register(self._socket, selectors.EVENT_READ, self._handle_received_message)
+            self._client_address = client_address
             self._log.debug('Upstream socket created')
             return
 

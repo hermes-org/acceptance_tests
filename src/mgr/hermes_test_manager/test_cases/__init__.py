@@ -9,9 +9,6 @@ import pytest
 from ipc_hermes.connections import UpstreamConnection, DownstreamConnection
 from ipc_hermes.messages import Message, Tag
 
-SYSTEM_UNDER_TEST_HOST = '127.0.0.1'
-SYSTEM_UNDER_TEST_PORT = 50101
-
 _ALL_TEST_CASES = {}
 
 
@@ -61,6 +58,9 @@ class EnvironmentManager():
     _use_wrapper_callback = False
     _machine_id = "Hermes Test API"
     _lane_id = "1"
+    _system_under_test_host = '127.0.0.1'
+    _system_under_test_port = 50101
+    _test_manager_port = 50103
 
     def __new__(cls):
         if cls._instance is None:
@@ -128,6 +128,33 @@ class EnvironmentManager():
         """Machine ID used in tests"""
         return self._machine_id
 
+    @property
+    def system_under_test_host(self) -> str:
+        """Host address of the system under test"""
+        return self._system_under_test_host
+
+    @system_under_test_host.setter
+    def system_under_test_host(self, value:str):
+        self._system_under_test_host = value
+
+    @property
+    def system_under_test_port(self) -> str:
+        """Port of the system under test"""
+        return self._system_under_test_port
+
+    @system_under_test_port.setter
+    def system_under_test_port(self, value:str):
+        self._system_under_test_port = value
+
+    @property
+    def test_manager_port(self) -> str:
+        """Downstream server port of the test manager"""
+        return self._test_manager_port
+
+    @test_manager_port.setter
+    def test_manager_port(self, value:str):
+        self._test_manager_port = value
+
     def service_description_message(self) -> Message:
         """Return ServiceDescription message"""
         return Message.ServiceDescription(self.machine_id, self.lane_id)
@@ -153,14 +180,12 @@ class EnvironmentManager():
 # context managers
 
 @contextmanager
-def create_upstream_context(receive=True,
-                            host=SYSTEM_UNDER_TEST_HOST,
-                            port=SYSTEM_UNDER_TEST_PORT):
+def create_upstream_context(receive=True):
     """Create a horizontal channel upstream connection context."""
     connection = UpstreamConnection()
     env = EnvironmentManager()
     try:
-        connection.connect(host, port)
+        connection.connect(env.system_under_test_host, env.system_under_test_port)
         if receive:
             connection.start_receiving()
         env.log.debug('Yield connection to test case')
@@ -172,15 +197,14 @@ def create_upstream_context(receive=True,
         raise
 
 @contextmanager
-def create_upstream_context_with_handshake(host = SYSTEM_UNDER_TEST_HOST,
-                                           port = SYSTEM_UNDER_TEST_PORT):
+def create_upstream_context_with_handshake():
     """Create a horizontal channel upstream connection context
         and do the ServiceDescription handshake.
     """
     connection = UpstreamConnection()
     env = EnvironmentManager()
     try:
-        connection.connect(host, port)
+        connection.connect(env.system_under_test_host, env.system_under_test_port)
         connection.start_receiving()
         connection.send_msg(EnvironmentManager().service_description_message())
         if env.use_handshake_callback:
@@ -195,13 +219,12 @@ def create_upstream_context_with_handshake(host = SYSTEM_UNDER_TEST_HOST,
         raise
 
 @contextmanager
-def create_downstream_context(host = SYSTEM_UNDER_TEST_HOST,
-                              port = SYSTEM_UNDER_TEST_PORT):
+def create_downstream_context():
     """Create a horizontal channel downstream server context"""
     connection = DownstreamConnection()
     env = EnvironmentManager()
     try:
-        connection.connect(host, port)
+        connection.connect('localhost', env.test_manager_port)
         connection.wait_for_connection(10)
         env.log.debug('Yield connection to test case')
         yield connection
@@ -212,15 +235,14 @@ def create_downstream_context(host = SYSTEM_UNDER_TEST_HOST,
         raise
 
 @contextmanager
-def create_downstream_context_with_handshake(host = SYSTEM_UNDER_TEST_HOST,
-                                             port = SYSTEM_UNDER_TEST_PORT):
+def create_downstream_context_with_handshake():
     """Create a horizontal channel downstream server context
         and do the ServiceDescription handshake.
     """
     connection = DownstreamConnection()
     env = EnvironmentManager()
     try:
-        connection.connect(host, port)
+        connection.connect('localhost', env.test_manager_port)
         connection.wait_for_connection(10)
         if env.use_handshake_callback:
             env.run_callback(__name__, 'Action required: Send ServiceDescription')

@@ -85,6 +85,17 @@ def run_test(testcase: str, callback=None, verbose=False) -> bool:
     log.error("Called unknown test case: %s", testcase)
     return False
 
+def system_under_test_address(host:str, port:str|int):
+    """Set the IP address of the system under test."""
+    env = EnvironmentManager()
+    env.system_under_test_host = host
+    env.system_under_test_port = port
+
+def testmanager_listening_port(port:str|int):
+    """Set the IP port of the test manager."""
+    env = EnvironmentManager()
+    env.test_manager_port = port
+
 def setup_default_logging(filename: str, level=logging.INFO, extra_loggers: list=None) -> None:
     """Optional setup of logging to file."""
     formatter = logging.Formatter('%(asctime)-19s.%(msecs)-3d [%(name)-15s] %(levelname)s: %(message)s',
