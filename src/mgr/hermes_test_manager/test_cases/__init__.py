@@ -6,6 +6,7 @@ import inspect
 
 import pytest
 
+from callback_tags import CbEvt
 from ipc_hermes.connections import UpstreamConnection, DownstreamConnection
 from ipc_hermes.messages import Message, Tag
 
@@ -76,16 +77,39 @@ class EnvironmentManager():
         """Check if a callback function is registered."""
         return self._callback is None
 
-    def run_callback(self, *args, **kwargs):
+    def run_callback(self, evt:CbEvt, **kwargs):
         """Execute the callback function.
            Raise a skip exception if no callback is registered.
         """
+        text = None
+        match evt:
+            case CbEvt.AFTER_TEST_CASE:
+                text = "Done."
+            case CbEvt.WAIT_FOR_MSG:
+                if kwargs.get('tag') is not None:
+                    if kwargs['tag'] == Tag.SERVICE_DESCRIPTION and not self.use_handshake_callback:
+                        return # skip callback
+                    text = f"Action required: Send {kwargs['tag']}"
+                else:
+                    raise ValueError("tag is required when using WAIT_FOR_MSG")
+            case CbEvt.HERMES_VERSION:
+                text = f"System under test uses Hermes version: {kwargs['version']}"
+            case CbEvt.WARNING:
+                self._log.warning(kwargs['text'])
+                text = f"Warning: {kwargs['text']}"
+            case _:
+                if kwargs.get('text') is not None:
+                    text = kwargs['text']
+        if kwargs.get('text') is not None:
+            kwargs.pop('text')
+        from_func = inspect.stack()[1].function
+
         if self._callback is None:
-            pytest.skip("missing callback")
-        else:
-            self._callback_used = True
-            self.log.debug("Executing callback...")
-            self._callback(*args, **kwargs)
+            pytest.skip("No callback function registered")
+            return
+        self._callback_used = True
+        self.log.debug("Executing callback event %s", CbEvt(evt).name)
+        self._callback(text, from_func, evt, **kwargs)
 
     @property
     def log(self) -> logging.Logger:
@@ -165,7 +189,7 @@ class EnvironmentManager():
         """
         self._callback_used = False
         if self._use_wrapper_callback:
-            self.run_callback(__name__, 'Start.')
+            self.run_callback(CbEvt.BEFORE_TEST_CASE)
 
     def optional_end_of_test_callback(self) -> None:
         """Send optional final callback when test is done
@@ -173,7 +197,7 @@ class EnvironmentManager():
            which improves the Jupyter user experiance
         """
         if self._callback_used or self._use_wrapper_callback:
-            self.run_callback(__name__, 'Done.')
+            self.run_callback(CbEvt.AFTER_TEST_CASE)
 
 
 ###############################################################
@@ -207,8 +231,7 @@ def create_upstream_context_with_handshake():
         connection.connect(env.system_under_test_host, env.system_under_test_port)
         connection.start_receiving()
         connection.send_msg(EnvironmentManager().service_description_message())
-        if env.use_handshake_callback:
-            env.run_callback(__name__, 'Action required: Send ServiceDescription')
+        env.run_callback(CbEvt.WAIT_FOR_MSG, tag=Tag.SERVICE_DESCRIPTION)
         connection.expect_message(Tag.SERVICE_DESCRIPTION)
         env.log.debug('Yield connection to test case')
         yield connection
@@ -225,7 +248,9 @@ def create_downstream_context():
     env = EnvironmentManager()
     try:
         connection.connect('localhost', env.test_manager_port)
-        connection.wait_for_connection(10)
+        client_address = connection.wait_for_connection(10)
+        env.run_callback(CbEvt.CLIENT_CONNECTED, address=client_address)
+
         env.log.debug('Yield connection to test case')
         yield connection
         env.log.debug('Return from yield')
@@ -243,11 +268,13 @@ def create_downstream_context_with_handshake():
     env = EnvironmentManager()
     try:
         connection.connect('localhost', env.test_manager_port)
-        connection.wait_for_connection(10)
-        if env.use_handshake_callback:
-            env.run_callback(__name__, 'Action required: Send ServiceDescription')
+        client_address = connection.wait_for_connection(10)
+        env.run_callback(CbEvt.CLIENT_CONNECTED, address=client_address)
+
+        env.run_callback(CbEvt.WAIT_FOR_MSG, tag=Tag.SERVICE_DESCRIPTION)
         connection.expect_message(Tag.SERVICE_DESCRIPTION)
         connection.send_msg(EnvironmentManager().service_description_message())
+
         env.log.debug('Yield connection to test case')
         yield connection
         env.log.debug('Return from yield')

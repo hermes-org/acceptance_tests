@@ -11,8 +11,10 @@
         to receive messages from the system under test.
 """
 
+from callback_tags import CbEvt
 from test_cases import hermes_testcase, EnvironmentManager
 from test_cases import create_downstream_context_with_handshake
+
 from ipc_hermes.messages import Tag, Message, TransferState
 
 
@@ -27,8 +29,7 @@ def test_complete_mrba_board_transfer_to_sut():
         env = EnvironmentManager()
 
         # ask for external agent to signal machine ready
-        env.run_callback(__name__, 'Action required: Send MachineReady',
-                                    msg=Tag.MACHINE_READY)
+        env.run_callback(CbEvt.WAIT_FOR_MSG, tag=Tag.MACHINE_READY)
         ctxt.expect_message(Tag.MACHINE_READY)
 
         # signal that we are ready to send board
@@ -36,16 +37,14 @@ def test_complete_mrba_board_transfer_to_sut():
         ctxt.send_msg(Message.BoardAvailable(board_id, env.machine_id))
 
         # ask for external agent to signal start transport
-        env.run_callback(__name__, 'Action required: Send StartTransport',
-                                   msg=Tag.START_TRANSPORT)
+        env.run_callback(CbEvt.WAIT_FOR_MSG, tag=Tag.START_TRANSPORT)
         ctxt.expect_message(Tag.START_TRANSPORT)
 
         # signal that transport is finished
         ctxt.send_msg(Message.TransportFinished(TransferState.COMPLETE, board_id))
 
         # ask for external agent to send board and signal stop transport
-        env.run_callback(__name__, "Action required: Send StopTransport",
-                                   msg=Tag.STOP_TRANSPORT)
+        env.run_callback(CbEvt.WAIT_FOR_MSG, tag=Tag.STOP_TRANSPORT)
         ctxt.expect_message(Tag.STOP_TRANSPORT)
 
 
@@ -64,19 +63,16 @@ def test_complete_bamr_board_transfer_to_sut():
         ctxt.send_msg(Message.BoardAvailable(board_id, env.machine_id))
 
         # ask for external agent to signal machine ready
-        env.run_callback(__name__, 'Action required: Send MachineReady',
-                                    msg=Tag.MACHINE_READY)
+        env.run_callback(CbEvt.WAIT_FOR_MSG, tag=Tag.MACHINE_READY)
         ctxt.expect_message(Tag.MACHINE_READY)
 
         # ask for external agent to signal start transport
-        env.run_callback(__name__, 'Action required: Send StartTransport',
-                                   msg=Tag.START_TRANSPORT)
+        env.run_callback(CbEvt.WAIT_FOR_MSG, tag=Tag.START_TRANSPORT)
         ctxt.expect_message(Tag.START_TRANSPORT)
 
         # signal that transport is finished
         ctxt.send_msg(Message.TransportFinished(TransferState.COMPLETE, board_id))
 
         # ask for external agent to send board and signal stop transport
-        env.run_callback(__name__, "Action required: Send StopTransport",
-                                   msg=Tag.STOP_TRANSPORT)
+        env.run_callback(CbEvt.WAIT_FOR_MSG, tag=Tag.STOP_TRANSPORT)
         ctxt.expect_message(Tag.STOP_TRANSPORT)

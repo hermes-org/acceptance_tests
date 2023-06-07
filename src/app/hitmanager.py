@@ -10,6 +10,7 @@ from kivy.uix.widget import Widget
 # pylint: disable=import-error
 from app.widgets.icon_treenode import TreeViewImageLabel
 from mgr.hermes_test_manager import hermes_test_api
+from mgr.hermes_test_manager.callback_tags import CbEvt
 
 class Hitmanager(Widget):
     """Main widget for HitManager. So far just one window
@@ -68,14 +69,11 @@ class Hitmanager(Widget):
         """Button press event handler for user confirmation."""
         self.ids.instruction_label.text = 'Pressed: ' + str(val)
 
-    def test_callback(self, *args, **kwargs):
+    # pylint: disable=unused-argument
+    def test_callback(self, text: str, from_func: str, evt: CbEvt, **kwargs):
         """Hermes test API callback function."""
-        # at the moment the callback is called with 3 arguments (will change!)
-        # arg0 : test name
-        # arg1 : instruction
-        # msg : waiting for Hermes message tag
-        instruction = args[1]
-        self.ids.instruction_label.text = instruction
+        if text is not None:
+            self.ids.instruction_label.text = text
 
     def _run_selected_test(self, selected_test):
         result = hermes_test_api.run_test(selected_test, self.test_callback, True)

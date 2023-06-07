@@ -1,5 +1,6 @@
 """Test cases for the upstream connection of a IPC-Hermes-9852 interface."""
 
+from callback_tags import CbEvt
 from test_cases import hermes_testcase, EnvironmentManager
 
 @hermes_testcase
@@ -17,4 +18,4 @@ def test2_fail():
 def test3_callback():
     """Test 3 - uses the callback."""
     print('test3')
-    EnvironmentManager().run_callback(__name__, "A callback from test3")
+    EnvironmentManager().run_callback(CbEvt.UNKNOWN, text="A callback from test3")

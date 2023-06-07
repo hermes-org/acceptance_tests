@@ -10,8 +10,8 @@
     to send messages to the system under test.
 """
 import re
-import pytest
 
+from callback_tags import CbEvt
 from test_cases import hermes_testcase, EnvironmentManager
 from test_cases import create_upstream_context, create_upstream_context_with_handshake
 
@@ -38,20 +38,18 @@ def test_connect_service_description_disconnect_n_times():
 
 
 @hermes_testcase
-@pytest.mark.testdriver
 def test_connect_handshake_disconnect():
     """Test connect, send ServiceDescription, wait for answer, disconnect."""
     with create_upstream_context() as ctxt:
         env = EnvironmentManager()
         ctxt.send_msg(env.service_description_message())
-        if env.use_handshake_callback:
-            env.run_callback(__name__, 'Action required: Send ServiceDescription')
+        env.run_callback(CbEvt.WAIT_FOR_MSG, tag=Tag.SERVICE_DESCRIPTION)
 
         msg = ctxt.expect_message(Tag.SERVICE_DESCRIPTION)
         # check Version is present & correct
         hermes_version = msg.data.get('Version')
         assert hermes_version is not None, 'IPC-Hermes version is missing in ServiceDescription'
-        env.run_callback(__name__, f"Info: Hermes version is {hermes_version}")
+        env.run_callback(CbEvt.HERMES_VERSION, version=hermes_version)
         env.log.info('System under test states IPC-Hermes version %s', hermes_version)
         version_regexp = r'^[1-9][0-9]{0,2}\.[0-9]{1,3}$'
         assert re.match(version_regexp, hermes_version), \
@@ -60,14 +58,16 @@ def test_connect_handshake_disconnect():
         machine_id = msg.data.get('MachineId')
         assert machine_id is not None, 'MachineId is missing in ServiceDescription'
         if len(machine_id.strip()) == 0:
-            env.log.warning('Be kind to loggers, don\'t leave MachineId in ServiceDescription as empty string')
+            env.run_callback(CbEvt.WARNING,
+                             text = 'Be kind to loggers, don\'t leave MachineId in ServiceDescription as empty string')
         # check LaneId is present and non-zero
         received_lane_id = msg.data.get('LaneId')
         assert received_lane_id is not None, 'LaneId is missing in ServiceDescription'
         assert str(received_lane_id).isnumeric and int(received_lane_id) > 0, \
             'LaneId in ServiceDescription is not greater than zero'
         if received_lane_id != env.lane_id:
-            env.log.warning('ServiceDescription did not return same LaneId as ServiceDescription sent from test case.')
+            env.run_callback(CbEvt.WARNING,
+                             text = 'ServiceDescription did not return same LaneId as ServiceDescription sent from test case.')
 
 
 @hermes_testcase
@@ -85,8 +85,8 @@ def test_connect_2_times():
             msg = ctxt2.expect_message(Tag.NOTIFICATION)
             assert msg.data.get('NotificationCode') == NotificationCode.CONNECTION_REFUSED, 'NotificationCode should be 2 (Connection refused)'
             if msg.data.get('Severity') != SeverityType.ERROR:
-                env.log.warning('Notification was sent according to standard, but its recommended to use "Severity" 2 (Error), recieved %s',
-                                msg.data.get('Severity'))
+                env.run_callback(CbEvt.WARNING,
+                                 text = f"Notification was sent according to standard, but its recommended to use 'Severity' 2 (Error), recieved {msg.data.get('Severity')}")
 
         # verify that ctxt1 still works
         ctxt1.send_msg(env.service_description_message())
@@ -112,8 +112,7 @@ def test_maximum_message_size():
         msg_bytes = msg_bytes[:splitat] + extend_by * b"x" + msg_bytes[splitat:]
         ctxt.send_tag_and_bytes(msg.tag, msg_bytes)
 
-        if env.use_handshake_callback:
-            env.run_callback(__name__, 'Action required: Send ServiceDescription')
+        env.run_callback(CbEvt.WAIT_FOR_MSG, tag=Tag.SERVICE_DESCRIPTION)
         ctxt.expect_message(Tag.SERVICE_DESCRIPTION)
 
 
@@ -131,8 +130,7 @@ def test_multiple_messages_per_packet():
         msg_bytes = check_alive.to_bytes() + service_description.to_bytes() + check_alive.to_bytes()
         ctxt.send_tag_and_bytes(service_description.tag, msg_bytes)
 
-        if env.use_handshake_callback:
-            env.run_callback(__name__, 'Action required: Send ServiceDescription')
+        env.run_callback(CbEvt.WAIT_FOR_MSG, tag=Tag.SERVICE_DESCRIPTION)
         ctxt.expect_message(Tag.SERVICE_DESCRIPTION)
 
 
@@ -163,7 +161,6 @@ def xtest_terminate_on_illegal_message():
                     pass
 
 @hermes_testcase
-@pytest.mark.testdriver
 def test_terminate_on_wrong_message_in_not_available_not_ready():
     """Test that connection is closed and reset when wrong messages are recieved
        in state: NotAvailableNotReady
@@ -186,8 +183,8 @@ def test_terminate_on_wrong_message_in_not_available_not_ready():
             assert notification.data.get('NotificationCode') == NotificationCode.PROTOCOL_ERROR, \
                 'NotificationCode should be 1 (Protocol error)'
             if notification.data.get('Severity') != SeverityType.FATAL:
-                env.log.warning('Notification was sent according to standard, but its recommended to use "Severity" 1 (Fatal error), recieved %s',
-                                notification.data.get('Severity'))
+                env.run_callback(CbEvt.WARNING,
+                                 text = f"Notification was sent according to standard, but its recommended to use 'Severity' 1 (Fatal error), recieved {notification.data.get('Severity')}")
             # other end has to close connection so check if socked is dead now
             try:
                 ctxt.send_msg(Message.Notification(NotificationCode.MACHINE_SHUTDOWN,

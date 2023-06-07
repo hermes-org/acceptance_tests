@@ -1,7 +1,9 @@
 """Command Line Interface for the IPC-Hermes-9852 interface test manager package."""
 
 import argparse
+
 from hermes_test_manager import hermes_test_api
+from hermes_test_manager.callback_tags import CbEvt
 
 LOG_FILE = "hitmanager.log"
 
@@ -24,9 +26,11 @@ def run_test(test_name: str) -> None:
     result = hermes_test_api.run_test(test_name, _callback_handler, verbose)
     print(f'Test {test_name} result: {result}')
 
-def _callback_handler(*args, **kwargs):
+# pylint: disable=unused-argument
+def _callback_handler(text: str, from_func: str, evt: CbEvt, **kwargs):
     """Default callback handler."""
-    print(args[1])
+    if text is not None:
+        print(text)
 
 
 if __name__ == '__main__':
