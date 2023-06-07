@@ -12,8 +12,7 @@
 """
 
 from callback_tags import CbEvt
-from test_cases import hermes_testcase, EnvironmentManager
-from test_cases import create_downstream_context_with_handshake
+from test_cases import hermes_testcase, create_downstream_context, EnvironmentManager
 
 from ipc_hermes.messages import Tag, Message, TransferState
 
@@ -25,7 +24,7 @@ def test_complete_mrba_board_transfer_to_sut():
 
        Sequence: MachineReady before BoardAvailable
     """
-    with create_downstream_context_with_handshake() as ctxt:
+    with create_downstream_context(handshake=True) as ctxt:
         env = EnvironmentManager()
 
         # ask for external agent to signal machine ready
@@ -55,7 +54,7 @@ def test_complete_bamr_board_transfer_to_sut():
 
        Sequence: BoardAvailable before MachineReady
     """
-    with create_downstream_context_with_handshake() as ctxt:
+    with create_downstream_context(handshake=True) as ctxt:
         env = EnvironmentManager()
 
         # signal that we are ready to send board

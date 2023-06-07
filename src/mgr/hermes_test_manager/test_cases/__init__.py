@@ -204,14 +204,22 @@ class EnvironmentManager():
 # context managers
 
 @contextmanager
-def create_upstream_context(receive=True):
-    """Create a horizontal channel upstream connection context."""
+def create_upstream_context(receive: bool=True, handshake: bool=False):
+    """Create a horizontal channel upstream connection context.
+       Args:
+            receive (bool) default True, start receiving messages.
+            handshake (bool) default False, exchange ServiceDescriptions
+    """
     connection = UpstreamConnection()
     env = EnvironmentManager()
     try:
         connection.connect(env.system_under_test_host, env.system_under_test_port)
         if receive:
             connection.start_receiving()
+        if handshake:
+            connection.send_msg(EnvironmentManager().service_description_message())
+            env.run_callback(CbEvt.WAIT_FOR_MSG, tag=Tag.SERVICE_DESCRIPTION)
+            connection.expect_message(Tag.SERVICE_DESCRIPTION)
         env.log.debug('Yield connection to test case')
         yield connection
         env.log.debug('Return from test case and yield')
@@ -221,48 +229,10 @@ def create_upstream_context(receive=True):
         raise
 
 @contextmanager
-def create_upstream_context_with_handshake():
-    """Create a horizontal channel upstream connection context
-        and do the ServiceDescription handshake.
-    """
-    connection = UpstreamConnection()
-    env = EnvironmentManager()
-    try:
-        connection.connect(env.system_under_test_host, env.system_under_test_port)
-        connection.start_receiving()
-        connection.send_msg(EnvironmentManager().service_description_message())
-        env.run_callback(CbEvt.WAIT_FOR_MSG, tag=Tag.SERVICE_DESCRIPTION)
-        connection.expect_message(Tag.SERVICE_DESCRIPTION)
-        env.log.debug('Yield connection to test case')
-        yield connection
-        env.log.debug('Return from yield')
-        connection.close()
-    except:
-        connection.close()
-        raise
-
-@contextmanager
-def create_downstream_context():
-    """Create a horizontal channel downstream server context"""
-    connection = DownstreamConnection()
-    env = EnvironmentManager()
-    try:
-        connection.connect('localhost', env.test_manager_port)
-        client_address = connection.wait_for_connection(10)
-        env.run_callback(CbEvt.CLIENT_CONNECTED, address=client_address)
-
-        env.log.debug('Yield connection to test case')
-        yield connection
-        env.log.debug('Return from yield')
-        connection.close()
-    except Exception:
-        connection.close()
-        raise
-
-@contextmanager
-def create_downstream_context_with_handshake():
-    """Create a horizontal channel downstream server context
-        and do the ServiceDescription handshake.
+def create_downstream_context(handshake: bool=False):
+    """Create a horizontal channel downstream server context.
+       Args:
+            handshake (bool) default False, exchange ServiceDescriptions
     """
     connection = DownstreamConnection()
     env = EnvironmentManager()
@@ -270,11 +240,10 @@ def create_downstream_context_with_handshake():
         connection.connect('localhost', env.test_manager_port)
         client_address = connection.wait_for_connection(10)
         env.run_callback(CbEvt.CLIENT_CONNECTED, address=client_address)
-
-        env.run_callback(CbEvt.WAIT_FOR_MSG, tag=Tag.SERVICE_DESCRIPTION)
-        connection.expect_message(Tag.SERVICE_DESCRIPTION)
-        connection.send_msg(EnvironmentManager().service_description_message())
-
+        if handshake:
+            env.run_callback(CbEvt.WAIT_FOR_MSG, tag=Tag.SERVICE_DESCRIPTION)
+            connection.expect_message(Tag.SERVICE_DESCRIPTION)
+            connection.send_msg(EnvironmentManager().service_description_message())
         env.log.debug('Yield connection to test case')
         yield connection
         env.log.debug('Return from yield')

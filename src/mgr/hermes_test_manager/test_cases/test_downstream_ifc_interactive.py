@@ -12,7 +12,7 @@
 """
 
 from callback_tags import CbEvt
-from test_cases import hermes_testcase, create_upstream_context_with_handshake
+from test_cases import hermes_testcase, create_upstream_context
 from test_cases import EnvironmentManager
 
 from ipc_hermes.messages import Tag, Message, TransferState
@@ -21,7 +21,7 @@ from ipc_hermes.messages import Tag, Message, TransferState
 @hermes_testcase
 def test_complete_board_transfer_from_sut():
     """Test a complete board transfer. Starting with exchanging ServiceDescriptions."""
-    with create_upstream_context_with_handshake() as ctxt:
+    with create_upstream_context(handshake=True) as ctxt:
         env = EnvironmentManager()
         # signal that we are ready to receive board
         ctxt.send_msg(Message.MachineReady())

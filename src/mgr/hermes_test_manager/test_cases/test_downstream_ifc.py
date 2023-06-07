@@ -12,8 +12,7 @@
 import re
 
 from callback_tags import CbEvt
-from test_cases import hermes_testcase, EnvironmentManager
-from test_cases import create_upstream_context, create_upstream_context_with_handshake
+from test_cases import hermes_testcase, create_upstream_context, EnvironmentManager
 
 from ipc_hermes.messages import MAX_MESSAGE_SIZE
 from ipc_hermes.messages import Message, Tag, TransferState, NotificationCode, SeverityType
@@ -149,7 +148,7 @@ def xtest_terminate_on_illegal_message():
         except Exception as exc:
             # part 2: try the same after initial handshake
             ctxt.close()
-            with create_upstream_context_with_handshake() as ctxt:
+            with create_upstream_context(handshake=True) as ctxt:
                 ctxt.send_tag_and_bytes(None, illegal_msg_bytes)
                 # other end has to close connection so check if socked is dead now,
                 # optionally a Notification can be sent before closing
@@ -176,7 +175,7 @@ def test_terminate_on_wrong_message_in_not_available_not_ready():
 
     for illegal_msg in messages:
         env.log.debug("Sub-test: %s", illegal_msg.tag)
-        with create_upstream_context_with_handshake() as ctxt:
+        with create_upstream_context(handshake=True) as ctxt:
             ctxt.send_msg(illegal_msg)
             # now we expect a notification, callback has no purpose here, this must be automatic
             notification = ctxt.expect_message(Tag.NOTIFICATION)

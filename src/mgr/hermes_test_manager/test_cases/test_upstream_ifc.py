@@ -13,8 +13,7 @@
 import re
 
 from callback_tags import CbEvt
-from test_cases import hermes_testcase, EnvironmentManager
-from test_cases import create_downstream_context, create_downstream_context_with_handshake
+from test_cases import hermes_testcase, create_downstream_context, EnvironmentManager
 
 from ipc_hermes.messages import Tag, Message, TransferState, NotificationCode, SeverityType
 from ipc_hermes.connections import ConnectionLost
@@ -86,7 +85,7 @@ def test_terminate_on_wrong_message_in_not_available_not_ready2():
 
     for illegal_msg in messages:
         env.log.debug("Sub-test: %s", illegal_msg.tag)
-        with create_downstream_context_with_handshake() as ctxt:
+        with create_downstream_context(handshake=True) as ctxt:
             ctxt.send_msg(illegal_msg)
             # now we expect a notification, callback has no purpose here, this must be automatic
             notification = ctxt.expect_message(Tag.NOTIFICATION)
