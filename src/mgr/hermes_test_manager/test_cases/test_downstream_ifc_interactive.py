@@ -13,7 +13,7 @@
 
 from callback_tags import CbEvt
 from test_cases import hermes_testcase, create_upstream_context
-from test_cases import EnvironmentManager
+from test_cases import EnvironmentManager, message_validator
 
 from ipc_hermes.messages import Tag, Message, TransferState
 
@@ -27,15 +27,16 @@ def test_complete_board_transfer_from_sut():
         ctxt.send_msg(Message.MachineReady())
 
         # ask for external agent to signal board available
-        env.run_callback(CbEvt.WAIT_FOR_MSG, tag=Tag.MACHINE_READY)
-        board_available = ctxt.expect_message(Tag.BOARD_AVAILABLE)
-        board_id = board_available.data.get('BoardId')
+        env.run_callback(CbEvt.WAIT_FOR_MSG, tag=Tag.BOARD_AVAILABLE)
+        msg_board_available = ctxt.expect_message(Tag.BOARD_AVAILABLE)
+        message_validator.validate_board_info(env, msg_board_available)
+        board_id = msg_board_available.data.get('BoardId')
 
         # signal that transport can start
         ctxt.send_msg(Message.StartTransport(board_id))
 
         # ask for external agent to send board and signal when board has left upstream
-        env.run_callback(CbEvt.WAIT_FOR_MSG, tag=Tag.MACHINE_READY)
+        env.run_callback(CbEvt.WAIT_FOR_MSG, tag=Tag.TRANSPORT_FINISHED)
         transport_finished = ctxt.expect_message(Tag.TRANSPORT_FINISHED)
         board_id2 = transport_finished.data.get('BoardId')
         assert board_id == board_id2

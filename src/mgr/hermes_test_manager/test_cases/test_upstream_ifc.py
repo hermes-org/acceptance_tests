@@ -10,10 +10,9 @@
         to receive messages from the system under test.
 """
 
-import re
-
 from callback_tags import CbEvt
-from test_cases import hermes_testcase, create_downstream_context, EnvironmentManager
+from test_cases import hermes_testcase, create_downstream_context
+from test_cases import EnvironmentManager, message_validator
 
 from ipc_hermes.messages import Tag, Message, TransferState, NotificationCode, SeverityType
 from ipc_hermes.connections import ConnectionLost
@@ -48,25 +47,7 @@ def test_start_handshake_shutdown():
         env = EnvironmentManager()
         env.run_callback(CbEvt.WAIT_FOR_MSG, tag=Tag.SERVICE_DESCRIPTION)
         msg = ctxt.expect_message(Tag.SERVICE_DESCRIPTION)
-        # check Version is present & correct
-        hermes_version = msg.data.get('Version')
-        assert hermes_version is not None, 'IPC-Hermes version is missing in ServiceDescription'
-        env.run_callback(CbEvt.HERMES_VERSION, version=hermes_version)
-        env.log.info('System under test states IPC-Hermes version %s', hermes_version)
-        version_regexp = r'^[1-9][0-9]{0,2}\.[0-9]{1,3}$'
-        assert re.match(version_regexp, hermes_version), \
-            'IPC-Hermes version in ServiceDescription has not in correct format xxx.yyy'
-        # check MachineId is present
-        machine_id = msg.data.get('MachineId')
-        assert machine_id is not None, 'MachineId is missing in ServiceDescription'
-        if len(machine_id.strip()) == 0:
-            env.run_callback(CbEvt.WARNING,
-                             text = 'Be kind to loggers, don\'t leave MachineId in ServiceDescription as empty string')
-        # check LaneId is present and non-zero
-        received_lane_id = msg.data.get('LaneId')
-        assert received_lane_id is not None, 'LaneId is missing in ServiceDescription'
-        assert str(received_lane_id).isnumeric and int(received_lane_id) > 0, \
-            'LaneId in ServiceDescription is not greater than zero'
+        message_validator.validate_service_description(env, msg)
 
 
 @hermes_testcase
@@ -87,13 +68,10 @@ def test_terminate_on_wrong_message_in_not_available_not_ready2():
         env.log.debug("Sub-test: %s", illegal_msg.tag)
         with create_downstream_context(handshake=True) as ctxt:
             ctxt.send_msg(illegal_msg)
-            # now we expect a notification, callback has no purpose here, this must be automatic
+            # now we expect a notification
+            # callback has no purpose here, TestDriver responeds automatically
             notification = ctxt.expect_message(Tag.NOTIFICATION)
-            assert notification.data.get('NotificationCode') == NotificationCode.PROTOCOL_ERROR, \
-                'NotificationCode should be 1 (Protocol error)'
-            if notification.data.get('Severity') != SeverityType.FATAL:
-                env.run_callback(CbEvt.WARNING,
-                                 text = f"Notification was sent according to standard, but its recommended to use 'Severity' 1 (Fatal error), recieved {notification.data.get('Severity')}")
+            message_validator.validate_notification(env, notification, NotificationCode.PROTOCOL_ERROR, SeverityType.FATAL)
 
             # other end has to close connection so check if socked is dead now
             try:

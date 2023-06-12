@@ -2,6 +2,7 @@
 
 import xml.etree.ElementTree as ET
 from datetime import datetime
+from enum import IntEnum
 
 MAX_MESSAGE_SIZE = 65536
 
@@ -25,36 +26,41 @@ class Tag:
     GET_CONFIGURATION = "GetConfiguration"
     CURRENT_CONFIGURATION = "CurrentConfiguration"
 
-class NotificationCode:
-    PROTOCOL_ERROR = "1"
-    CONNECTION_REFUSED = "2"
-    CONNECTION_RESET = "3"
-    CONFIGURATION_ERROR = "4"
-    MACHINE_SHUTDOWN = "5"
-    BOARDFORECAST_ERROR = "6"
+class NotificationCode(IntEnum):
+    """Notification code for Notification messages."""
+    PROTOCOL_ERROR = 1
+    CONNECTION_REFUSED = 2
+    CONNECTION_RESET = 3
+    CONFIGURATION_ERROR = 4
+    MACHINE_SHUTDOWN = 5
+    BOARDFORECAST_ERROR = 6
 
-class SeverityType:
-    FATAL = "1"
-    ERROR = "2"
-    WARNING = "3"
-    INFORMATION = "4"
+class SeverityType(IntEnum):
+    """Severity level for Notification messages."""
+    FATAL = 1
+    ERROR = 2
+    WARNING = 3
+    INFORMATION = 4
 
-class CheckAliveType:
+class CheckAliveType(IntEnum):
+    """Ping/Pong message type when CheckAliveResponse is used."""
     PING = 1
     PONG = 2
 
-class BoardQuality:
+class BoardQuality(IntEnum):
+    """Allowed types for FailedBoard value."""
     UNKNOWN = 0
-    ANY = 0
     GOOD = 1
     BAD = 2
 
-class FlippedBoard:
+class FlippedBoard(IntEnum):
+    """Allowed types for FlippedBoard value."""
     SIDE_UP_IS_UKNOWN = 0
     TOP_SIDE_IS_UP = 1
     BOTTOM_SIDE_IS_UP = 2
 
-class TransferState:
+class TransferState(IntEnum):
+    """Board state for StopTransport/TransportFinished messages."""
     NOT_STARTED = 1
     INCOMPLETE = 2
     COMPLETE = 3
@@ -97,10 +103,11 @@ class Message:
 
     @classmethod
     def CheckAlive(cls,
-                   checkalive_type = None,
+                   checkalive_type: CheckAliveType = None,
                    checkalive_id = None):
         self = cls(None, "CheckAlive")
-        self.set("Type", checkalive_type)
+        if checkalive_type is not None:
+            self.set("Type", checkalive_type.value)
         self.set("Id", checkalive_id)
         return self
 
@@ -123,10 +130,13 @@ class Message:
         return self
 
     @classmethod
-    def Notification(cls, notification_code, severity, description):
+    def Notification(cls,
+                     notification_code: NotificationCode,
+                     severity: SeverityType,
+                     description: str):
         self = cls(None, "Notification")
-        self.set("NotificationCode", notification_code)
-        self.set("Severity", severity)
+        self.set("NotificationCode", notification_code.value)
+        self.set("Severity", severity.value)
         self.set("Description", description)
         return self
 
@@ -151,9 +161,8 @@ class Message:
         self.set("BoardId", board_id)
         self.set("BoardIdCreatedBy", board_id_created_by)
         self.set("ProductTypeId", product_type_id)
-        self.set("FailedBoard", failed_board)
-        self.set("ProductTypeId", product_type_id)
-        self.set("FlippedBoard", flipped_board)
+        self.set("FailedBoard", failed_board.value)
+        self.set("FlippedBoard", flipped_board.value)
         self.set("TopBarcode", top_barcode)
         self.set("BottomBarcode", bottom_barcode)
         self.set("Length", length)
@@ -191,9 +200,8 @@ class Message:
         self.set("BoardId", board_id)
         self.set("BoardIdCreatedBy", board_id_created_by)
         self.set("ProductTypeId", product_type_id)
-        self.set("FailedBoard", failed_board)
-        self.set("ProductTypeId", product_type_id)
-        self.set("FlippedBoard", flipped_board)
+        self.set("FailedBoard", failed_board.value)
+        self.set("FlippedBoard", flipped_board.value)
         self.set("TopBarcode", top_barcode)
         self.set("BottomBarcode", bottom_barcode)
         self.set("Length", length)
@@ -213,7 +221,7 @@ class Message:
 
     @classmethod
     def MachineReady(cls,
-                     failed_board = BoardQuality.ANY,
+                     failed_board = BoardQuality.UNKNOWN,
                      forecast_id = None,
                      board_id = None,
                      product_type_id = None,
@@ -227,11 +235,11 @@ class Message:
                      weight = None,
                      work_order_id = None):
         self = cls(None, "MachineReady")
-        self.set("FailedBoard", failed_board)
         self.set("ForecastId", forecast_id)
         self.set("BoardId", board_id)
         self.set("ProductTypeId", product_type_id)
-        self.set("FlippedBoard", flipped_board)
+        self.set("FailedBoard", failed_board.value)
+        self.set("FlippedBoard", flipped_board.value)
         self.set("Length", length)
         self.set("Width", width)
         self.set("Thickness", thickness)
@@ -258,19 +266,19 @@ class Message:
 
     @classmethod
     def StopTransport(cls,
-                      transfer_state,
+                      transfer_state: TransferState,
                       board_id):
         self = cls(None, "StopTransport")
-        self.set("TransferState", transfer_state)
+        self.set("TransferState", transfer_state.value)
         self.set("BoardId", board_id)
         return self
 
     @classmethod
     def TransportFinished(cls,
-                      transfer_state,
-                      board_id):
+                          transfer_state: TransferState,
+                          board_id):
         self = cls(None, "TransportFinished")
-        self.set("TransferState", transfer_state)
+        self.set("TransferState", transfer_state.value)
         self.set("BoardId", board_id)
         return self
 

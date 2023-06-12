@@ -9,10 +9,10 @@
     thus an upstream connection is used by this test code 
     to send messages to the system under test.
 """
-import re
 
 from callback_tags import CbEvt
-from test_cases import hermes_testcase, create_upstream_context, EnvironmentManager
+from test_cases import hermes_testcase, create_upstream_context
+from test_cases import EnvironmentManager, message_validator
 
 from ipc_hermes.messages import MAX_MESSAGE_SIZE
 from ipc_hermes.messages import Message, Tag, TransferState, NotificationCode, SeverityType
@@ -43,30 +43,8 @@ def test_connect_handshake_disconnect():
         env = EnvironmentManager()
         ctxt.send_msg(env.service_description_message())
         env.run_callback(CbEvt.WAIT_FOR_MSG, tag=Tag.SERVICE_DESCRIPTION)
-
         msg = ctxt.expect_message(Tag.SERVICE_DESCRIPTION)
-        # check Version is present & correct
-        hermes_version = msg.data.get('Version')
-        assert hermes_version is not None, 'IPC-Hermes version is missing in ServiceDescription'
-        env.run_callback(CbEvt.HERMES_VERSION, version=hermes_version)
-        env.log.info('System under test states IPC-Hermes version %s', hermes_version)
-        version_regexp = r'^[1-9][0-9]{0,2}\.[0-9]{1,3}$'
-        assert re.match(version_regexp, hermes_version), \
-            'IPC-Hermes version in ServiceDescription has not in correct format xxx.yyy'
-        # check MachineId is present
-        machine_id = msg.data.get('MachineId')
-        assert machine_id is not None, 'MachineId is missing in ServiceDescription'
-        if len(machine_id.strip()) == 0:
-            env.run_callback(CbEvt.WARNING,
-                             text = 'Be kind to loggers, don\'t leave MachineId in ServiceDescription as empty string')
-        # check LaneId is present and non-zero
-        received_lane_id = msg.data.get('LaneId')
-        assert received_lane_id is not None, 'LaneId is missing in ServiceDescription'
-        assert str(received_lane_id).isnumeric and int(received_lane_id) > 0, \
-            'LaneId in ServiceDescription is not greater than zero'
-        if received_lane_id != env.lane_id:
-            env.run_callback(CbEvt.WARNING,
-                             text = 'ServiceDescription did not return same LaneId as ServiceDescription sent from test case.')
+        message_validator.validate_service_description(env, msg)
 
 
 @hermes_testcase
@@ -82,10 +60,7 @@ def test_connect_2_times():
 
         with create_upstream_context() as ctxt2:
             msg = ctxt2.expect_message(Tag.NOTIFICATION)
-            assert msg.data.get('NotificationCode') == NotificationCode.CONNECTION_REFUSED, 'NotificationCode should be 2 (Connection refused)'
-            if msg.data.get('Severity') != SeverityType.ERROR:
-                env.run_callback(CbEvt.WARNING,
-                                 text = f"Notification was sent according to standard, but its recommended to use 'Severity' 2 (Error), recieved {msg.data.get('Severity')}")
+            message_validator.validate_notification(env, msg, NotificationCode.CONNECTION_REFUSED, SeverityType.ERROR)
 
         # verify that ctxt1 still works
         ctxt1.send_msg(env.service_description_message())
@@ -177,13 +152,11 @@ def test_terminate_on_wrong_message_in_not_available_not_ready():
         env.log.debug("Sub-test: %s", illegal_msg.tag)
         with create_upstream_context(handshake=True) as ctxt:
             ctxt.send_msg(illegal_msg)
-            # now we expect a notification, callback has no purpose here, this must be automatic
+            # now we expect a notification
+            # callback has no purpose here, TestDriver responeds automatically
             notification = ctxt.expect_message(Tag.NOTIFICATION)
-            assert notification.data.get('NotificationCode') == NotificationCode.PROTOCOL_ERROR, \
-                'NotificationCode should be 1 (Protocol error)'
-            if notification.data.get('Severity') != SeverityType.FATAL:
-                env.run_callback(CbEvt.WARNING,
-                                 text = f"Notification was sent according to standard, but its recommended to use 'Severity' 1 (Fatal error), recieved {notification.data.get('Severity')}")
+            message_validator.validate_notification(env, notification, NotificationCode.PROTOCOL_ERROR, SeverityType.FATAL)
+
             # other end has to close connection so check if socked is dead now
             try:
                 ctxt.send_msg(Message.Notification(NotificationCode.MACHINE_SHUTDOWN,
