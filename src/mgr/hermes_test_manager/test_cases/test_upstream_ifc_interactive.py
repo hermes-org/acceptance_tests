@@ -10,6 +10,7 @@
         thus a downstream connection is used by this test code 
         to receive messages from the system under test.
 """
+import uuid
 
 from callback_tags import CbEvt
 from test_cases import hermes_testcase, create_downstream_context, EnvironmentManager
@@ -32,7 +33,7 @@ def test_complete_mrba_board_transfer_to_sut():
         ctxt.expect_message(Tag.MACHINE_READY)
 
         # signal that we are ready to send board
-        board_id = '1234567890'
+        board_id = str(uuid.uuid4())
         ctxt.send_msg(Message.BoardAvailable(board_id, env.machine_id))
 
         # ask for external agent to signal start transport
@@ -58,7 +59,7 @@ def test_complete_bamr_board_transfer_to_sut():
         env = EnvironmentManager()
 
         # signal that we are ready to send board
-        board_id = '1234567890'
+        board_id = str(uuid.uuid4())
         ctxt.send_msg(Message.BoardAvailable(board_id, env.machine_id))
 
         # ask for external agent to signal machine ready

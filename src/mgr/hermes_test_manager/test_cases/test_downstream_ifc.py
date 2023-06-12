@@ -9,6 +9,7 @@
     thus an upstream connection is used by this test code 
     to send messages to the system under test.
 """
+import uuid
 
 from callback_tags import CbEvt
 from test_cases import hermes_testcase, create_upstream_context
@@ -145,7 +146,7 @@ def test_terminate_on_wrong_message_in_not_available_not_ready():
     messages = [env.service_description_message(),
                 Message.RevokeMachineReady(),
                 Message.StartTransport("some_guid"),
-                Message.StopTransport(TransferState.COMPLETE, "some_guid")
+                Message.StopTransport(TransferState.COMPLETE, str(uuid.uuid4()))
                 ]
 
     for illegal_msg in messages:
