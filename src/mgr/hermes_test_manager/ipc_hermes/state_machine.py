@@ -90,36 +90,45 @@ class StateMachine:
         """Get the current state."""
         return self._state
 
-    def on_send_tag(self, tag):
-        """Handle a send tag. It is allowed to send messages that violate the protocol."""
+    def on_send_tag(self, tag: str, raise_on_error: bool):
+        """Handle a send tag. Normally raises StateMachineError if the message is not allowed.
+           Argument
+                raise_on_error = False will allow messages that violate the protocol.
+        """
         state_dict = self._send_dict.get(tag)
         if state_dict is None:
-            # Message tag not defined, don't change the state.
+            # Message tag not defined e.g., Notification, don't change the state.
             return
 
         new_state = state_dict.get(self._state)
-        if new_state is None or new_state == self._state:
-            # From-state not defined, or already in To-state.
+        if new_state == self._state:
+            # No state change
             return
-        self._log.debug('From: %s, To: %s, Trigger: %s', self._state, new_state, tag)
+        if new_state is None:
+            # From-state was not defined, illegal message.
+            if raise_on_error:
+                raise StateMachineError(self._state, tag)
+            else:
+                self._log.debug('Illegal %s message sent in %s', tag, self._state)
+                return
+        self._log.info('From: %s, To: %s, Trigger: %s', self._state, new_state, tag)
         self._state = new_state
 
     def on_recv(self, msg: Message):
         """Handle a recived message. Raises StateMachineError if the message is not allowed."""
         state_dict = self._recv_dict.get(msg.tag)
         if state_dict is None:
-            # Message tag not defined, don't change the state.
             return
 
         try:
             new_state = state_dict[self._state]
             if new_state == self._state:
                 return
-            self._log.debug('From: %s, To: %s, Trigger: %s', self._state, new_state, msg.tag)
+            self._log.info('From: %s, To: %s, Trigger: %s', self._state, new_state, msg.tag)
             self._state = new_state
 
-        except KeyError:
-            raise StateMachineError(self._state, msg)
+        except KeyError as exc:
+            raise StateMachineError(self._state, msg) from exc
 
 class UpstreamStateMachine(StateMachine):
     """"IPC-Hermes-9852 upstream state machine."""

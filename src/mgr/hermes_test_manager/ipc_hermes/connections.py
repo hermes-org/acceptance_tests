@@ -41,6 +41,7 @@ class ClientServer:
         self._receive_thread = None
         self._selector = _ServerSelector()
         self._listener_exception = None
+        self.strict_send_protocol = True
 
     def connect(self, host:str, port:str|int) -> None:
         """Initiate the connection. To be overridden by subclasses."""
@@ -59,19 +60,19 @@ class ClientServer:
     def send_msg(self, msg:Message) -> int:
         """Send a message."""
         assert self._socket is not None, 'No connection established'
-        self._log.debug('Try send: %s', str(msg))
+        self._log.info('Try send: %s', str(msg))
         return self._send_bytes(msg.tag, msg.to_bytes())
 
     def send_tag_and_bytes(self, tag:Tag, msg_bytes:bytes) -> int:
         """Send a byte message to the downstream interface. 
            Allows protocol violations to be created, for testing only."""
         assert self._socket is not None, 'No connection established'
-        self._log.debug('Try send %s bytes, "%s"', len(msg_bytes), tag)
+        self._log.info('Try send %s bytes, "%s"', len(msg_bytes), tag)
         return self._send_bytes(tag, msg_bytes)
 
     def _send_bytes(self, tag:Tag, msg_bytes:bytes) -> int:
         """Send a byte message to the downstream interface."""
-        self._state_machine.on_send_tag(tag)
+        self._state_machine.on_send_tag(tag, self.strict_send_protocol)
         bytes_sent = self._socket.send(msg_bytes)
         time.sleep(0.02)
         if self._listener_exception is not None:
@@ -143,7 +144,7 @@ class ClientServer:
             splitat = index + len(ENDTAG)
             msg_bytes, self._pending_bytes = self._pending_bytes[:splitat], self._pending_bytes[splitat:0]
             msg = Message(ET.fromstring(msg_bytes))
-            self._log.debug('Received: %s', msg)
+            self._log.info('Received: %s', msg)
             self._deque.append(msg)
 
 

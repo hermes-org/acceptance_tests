@@ -211,6 +211,7 @@ def create_upstream_context(receive: bool=True, handshake: bool=False):
             handshake (bool) default False, exchange ServiceDescriptions
     """
     connection = UpstreamConnection()
+    connection.strict_send_protocol = False
     env = EnvironmentManager()
     try:
         connection.connect(env.system_under_test_host, env.system_under_test_port)
@@ -235,6 +236,7 @@ def create_downstream_context(handshake: bool=False):
             handshake (bool) default False, exchange ServiceDescriptions
     """
     connection = DownstreamConnection()
+    connection.strict_send_protocol = False
     env = EnvironmentManager()
     try:
         connection.connect('localhost', env.test_manager_port)
