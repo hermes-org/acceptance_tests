@@ -50,7 +50,7 @@ def validate_notification(env: EnvironmentManager, msg: Message,
     severity = _validate_mandatory_enum(env, msg, 'Severity', messages.SeverityType)
     if severity != expected_severity:
         env.run_callback(CbEvt.WARNING,
-                            text = f"Notification was sent according to standard, but its recommended to use 'Severity' {expected_severity}:{expected_severity.name}, recieved {severity}")
+                            text = f"Notification was sent according to standard, but its recommended to use Severity {expected_severity}:{expected_severity.name}, recieved {severity}")
 
 
 def validate_board_info(env: EnvironmentManager, msg: Message):

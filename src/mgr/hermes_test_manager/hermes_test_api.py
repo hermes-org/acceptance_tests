@@ -47,8 +47,8 @@ class TestInfo():
 def available_tests() -> dict:
     """Return a dictionary with TestInfo objects about available tests."""
     test_infos = {}
-    for name, test_info in get_test_dictionary().items():
-        test_infos[name] = TestInfo(name, test_info[1], test_info[2])
+    for name, test_data in get_test_dictionary().items():
+        test_infos[name] = TestInfo(name, test_data[1], test_data[2])
     return test_infos
 
 def run_test(testcase: str, callback=None, verbose=False) -> bool:
@@ -64,16 +64,15 @@ def run_test(testcase: str, callback=None, verbose=False) -> bool:
     env.use_handshake_callback = verbose
     env.use_wrapper_callback = verbose
     if callback is not None:
-        # TODO verify callback when final format decided
         env.register_callback(callback)
 
-    test_info = get_test_dictionary().get(testcase)
-    func = test_info[0]
+    test_data = get_test_dictionary().get(testcase)
+    func = test_data[0]
     if func is not None:
         try:
-            log.info("Start %s...", testcase)
+            log.info("Start %s.%s...", test_data[1], testcase)
             func()
-        except Exception as exc:
+        except Exception as exc: # pylint: disable=broad-except
             print(f"FAILED with error: {str(exc)}")
             log.error("Failed: %s, %s", testcase, exc)
             return False
