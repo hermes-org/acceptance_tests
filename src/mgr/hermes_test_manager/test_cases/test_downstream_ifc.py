@@ -68,6 +68,14 @@ def test_connect_2_times():
 
 
 @hermes_testcase
+def test_unknown_attribute():
+    """Test that unknown attributes are ignored.
+       Success requires that the system under test responds with its own ServiceDescription.
+    """
+    _send_servicedescription_unknown_attribute()
+
+
+@hermes_testcase
 def test_maximum_message_size():
     """Test maximum message size by sending a ServiceDescription message of max size.
        Success requires that the system under test responds with its own ServiceDescription.
@@ -75,6 +83,10 @@ def test_maximum_message_size():
           * a message spilt into multiple packets
           * a message with an unknown attribute
     """
+    _send_servicedescription_unknown_attribute(use_max_message_size=True)
+
+
+def _send_servicedescription_unknown_attribute(use_max_message_size: bool=False):
     with create_upstream_context() as ctxt:
         env = EnvironmentManager()
         msg = Message.ServiceDescription("DownstreamId", env.lane_id)
@@ -83,7 +95,10 @@ def test_maximum_message_size():
         dummy_attr = b'HermesAcceptanceTestDummyAttributeId="" '
         msg_bytes = msg_bytes[:splitat] + dummy_attr + msg_bytes[splitat:]
         splitat += len(dummy_attr) - 2
-        extend_by = MAX_MESSAGE_SIZE - len(msg_bytes)
+        if use_max_message_size:
+            extend_by = MAX_MESSAGE_SIZE - len(msg_bytes)
+        else:
+            extend_by = 3
         msg_bytes = msg_bytes[:splitat] + extend_by * b"x" + msg_bytes[splitat:]
         ctxt.send_tag_and_bytes(msg.tag, msg_bytes)
 
@@ -108,32 +123,6 @@ def test_multiple_messages_per_packet():
         env.run_callback(CbEvt.WAIT_FOR_MSG, tag=Tag.SERVICE_DESCRIPTION)
         ctxt.expect_message(Tag.SERVICE_DESCRIPTION)
 
-
-@hermes_testcase
-def xtest_terminate_on_illegal_message():
-    """Test that connection is closed and reset when unknown message tags are recieved"""
-    with create_upstream_context() as ctxt:
-        illegal_msg_bytes = b"<Hermes Timestamp='2020-04-28T10:01:20.768'><ThisIsUnknownMessage /></Hermes>"
-        ctxt.send_tag_and_bytes(None, illegal_msg_bytes)
-        # other end has to close connection so check if socked is dead now,
-        # optionally a Notification can be sent before closing
-        try:
-            ctxt.expect_message(Tag.NOTIFICATION)
-            ctxt.close()
-            raise ValueError("illegal message erroneously accepted")
-        except Exception as exc:
-            # part 2: try the same after initial handshake
-            ctxt.close()
-            with create_upstream_context(handshake=True) as ctxt:
-                ctxt.send_tag_and_bytes(None, illegal_msg_bytes)
-                # other end has to close connection so check if socked is dead now,
-                # optionally a Notification can be sent before closing
-                try:
-                    ctxt.expect_message(Tag.NOTIFICATION)
-                    ctxt.close()
-                    raise ValueError("illegal message erroneously accepted after handshake") from exc
-                except:
-                    pass
 
 @hermes_testcase
 def test_terminate_on_wrong_message_in_not_available_not_ready():

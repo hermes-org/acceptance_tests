@@ -21,6 +21,22 @@ from ipc_hermes.messages import Tag, Message, TransferState
 @hermes_testcase
 def test_complete_board_transfer_from_sut():
     """Test a complete board transfer. Starting with exchanging ServiceDescriptions."""
+    _complete_board_transfer_from_sut()
+
+
+@hermes_testcase
+def test_complete_board_transfer_with_unknown_msg():
+    """Test a complete board transfer with an unknown message in the sequence.
+       the unknown message should be ignored and the sequence should continue.
+
+       It's not allowed to forward the unknown message to other systems,
+       this is tested in a separate test case.
+    """
+    _complete_board_transfer_from_sut(True)
+
+
+def _complete_board_transfer_from_sut(send_unexpected_msg=False):
+    """Test a complete board transfer. Starting with exchanging ServiceDescriptions."""
     with create_upstream_context(handshake=True) as ctxt:
         env = EnvironmentManager()
         # signal that we are ready to receive board
@@ -31,6 +47,10 @@ def test_complete_board_transfer_from_sut():
         msg_board_available = ctxt.expect_message(Tag.BOARD_AVAILABLE)
         message_validator.validate_board_info(env, msg_board_available)
         board_id = msg_board_available.data.get('BoardId')
+
+        if send_unexpected_msg:
+            unknown_msg_bytes = b"<Hermes Timestamp='2020-04-28T10:01:20.768'><ThisIsUnknownMessage /></Hermes>"
+            ctxt.send_tag_and_bytes(None, unknown_msg_bytes)
 
         # signal that transport can start
         ctxt.send_msg(Message.StartTransport(board_id))
