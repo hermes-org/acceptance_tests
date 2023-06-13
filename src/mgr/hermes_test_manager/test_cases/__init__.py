@@ -77,11 +77,10 @@ class EnvironmentManager():
         """Check if a callback function is registered."""
         return self._callback is None
 
-    def run_callback(self, evt:CbEvt, **kwargs):
+    def run_callback(self, evt:CbEvt, text:str = None, **kwargs):
         """Execute the callback function.
            Raise a skip exception if no callback is registered.
         """
-        text = None
         match evt:
             case CbEvt.AFTER_TEST_CASE:
                 text = "Done."
@@ -95,13 +94,8 @@ class EnvironmentManager():
             case CbEvt.HERMES_VERSION:
                 text = f"System under test uses Hermes version: {kwargs['version']}"
             case CbEvt.WARNING:
-                self._log.warning(kwargs['text'])
-                text = f"Warning: {kwargs['text']}"
-            case _:
-                if kwargs.get('text') is not None:
-                    text = kwargs['text']
-        if kwargs.get('text') is not None:
-            kwargs.pop('text')
+                self._log.warning(text)
+                text = f"Warning: {text}"
         from_func = inspect.stack()[1].function
 
         if self._callback is None:
