@@ -47,12 +47,34 @@ class Hitmanager(Widget):
         if node is not None:
             selected_test = node.text
             test_info = self._available_tests.get(selected_test)
+            # display test info
             name = selected_test.replace('_', ' ').title()
             rst_text = f"**{test_info.tag}**\n\n"
             rst_text += name + "\n"
             rst_text += "=" * len(name) + "\n\n"
             rst_text += test_info.description
             self.ids.test_info.text = rst_text
+            # update graphic
+            if 'upstream' in test_info.module:
+                self.ids.img_upstream1.disabled = False
+                self.ids.img_upstream2.disabled = False
+                self.ids.img_upstream1.opacity = 1
+                self.ids.img_upstream2.opacity = 1
+            else:
+                self.ids.img_upstream1.disabled = True
+                self.ids.img_upstream2.disabled = True
+                self.ids.img_upstream1.opacity = 0
+                self.ids.img_upstream2.opacity = 0
+            if 'downstream' in test_info.module:
+                self.ids.img_downstream1.disabled = False
+                self.ids.img_downstream2.disabled = False
+                self.ids.img_downstream1.opacity = 1
+                self.ids.img_downstream2.opacity = 1
+            else:
+                self.ids.img_downstream1.disabled = True
+                self.ids.img_downstream2.disabled = True
+                self.ids.img_downstream1.opacity = 0
+                self.ids.img_downstream2.opacity = 0
         return True
 
     def run_selected_tests(self) -> None:
@@ -72,8 +94,13 @@ class Hitmanager(Widget):
     # pylint: disable=unused-argument
     def test_callback(self, text: str, from_func: str, evt: CbEvt, **kwargs):
         """Hermes test API callback function."""
+        Clock.schedule_once(lambda _: self._callback(text, from_func, evt, **kwargs))
+
+    def _callback(self, text: str, from_func: str, evt: CbEvt, **kwargs):
+        """Hermes test API callback function in main thread."""
         if text is not None:
-            self.ids.instruction_label.text = text
+            old_text = self.ids.instruction_label.text
+            self.ids.instruction_label.text = f"{old_text}\n{text}"
 
     def _run_selected_test(self, selected_test):
         result = hermes_test_api.run_test(selected_test, self.test_callback, True)

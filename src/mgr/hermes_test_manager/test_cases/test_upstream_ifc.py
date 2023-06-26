@@ -20,8 +20,11 @@ from ipc_hermes.connections import ConnectionLost
 
 @hermes_testcase
 def test_start_shutdown_n_times():
-    """Test start and shutdown server 10 times. Ignore any ServiceDescription received.
-        Warning: this test may take a minute to complete."""
+    """
+    Test start and shutdown server 10 times. Ignore any ServiceDescription received.
+
+    Warning: this test may take a minute to complete.
+    """
     for _ in range(10):
         with create_downstream_context():
             pass
@@ -29,9 +32,10 @@ def test_start_shutdown_n_times():
 
 @hermes_testcase
 def test_exchange_service_description_shutdown_n_times():
-    """Test connect and disconnect n times.
-       Exchange ServiceDescription and shutdown server.
-       Warning: this test may take a minute to complete.
+    """
+    Test connect and disconnect n times. Exchange ServiceDescription and shutdown server.
+
+    Warning: this test may take a minute to complete.
     """
     for _ in range(10):
         with create_downstream_context() as ctxt:
@@ -42,7 +46,11 @@ def test_exchange_service_description_shutdown_n_times():
 
 @hermes_testcase
 def test_start_handshake_shutdown():
-    """Test start server, receive ServiceDescription, shutdown."""
+    """
+    Test start server, receive ServiceDescription, shutdown.
+
+    Contents of the ServiceDescription will be validated.
+    """
     with create_downstream_context() as ctxt:
         env = EnvironmentManager()
         env.run_callback(CbEvt.WAIT_FOR_MSG, tag=Tag.SERVICE_DESCRIPTION)
@@ -52,11 +60,13 @@ def test_start_handshake_shutdown():
 
 @hermes_testcase
 def test_terminate_on_wrong_message_in_not_available_not_ready2():
-    """Test that connection is closed and reset when wrong messages are recieved
-       in state: NotAvailableNotReady
-       each sub-test start with handshake and ends with closing the connection
-       RevokeMachineReady, StartTransport & StopTransport are not tested as 
-       they should never be sent
+    """
+    Test that connection is closed and reset when wrong messages are recieved
+    in state: **NotAvailableNotReady**
+
+    Each sub-test start with handshake and ends with closing the connection.
+    RevokeMachineReady, StartTransport & StopTransport are not tested as 
+    they should never be sent.
     """
     env = EnvironmentManager()
     messages = [env.service_description_message(),
@@ -71,7 +81,9 @@ def test_terminate_on_wrong_message_in_not_available_not_ready2():
             # now we expect a notification
             # callback has no purpose here, TestDriver responeds automatically
             notification = ctxt.expect_message(Tag.NOTIFICATION)
-            message_validator.validate_notification(env, notification, NotificationCode.PROTOCOL_ERROR, SeverityType.FATAL)
+            message_validator.validate_notification(env, notification,
+                                                    NotificationCode.PROTOCOL_ERROR,
+                                                    SeverityType.FATAL)
 
             # other end has to close connection so check if socked is dead now
             try:

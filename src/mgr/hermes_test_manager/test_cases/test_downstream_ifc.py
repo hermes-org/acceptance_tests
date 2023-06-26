@@ -21,7 +21,11 @@ from ipc_hermes.connections import ConnectionLost
 
 @hermes_testcase
 def test_connect_disconnect_n_times():
-    """Test connect and disconnect n times. No ServiceDescription sent."""
+    """
+    Test connect and disconnect n times.
+
+    No ServiceDescription will be sent.
+    """
     for _ in range(10):
         with create_upstream_context(receive=False):
             pass
@@ -29,8 +33,10 @@ def test_connect_disconnect_n_times():
 
 @hermes_testcase
 def test_connect_service_description_disconnect_n_times():
-    """Test connect and disconnect n times. 
-       Send ServiceDescription but don't wait for answer before closing connection.
+    """
+    Test connect and disconnect n times.
+
+    ServiceDescription is sent but we don't wait for answer before closing connection.
     """
     for _ in range(10):
         with create_upstream_context(receive=False) as ctxt:
@@ -39,7 +45,11 @@ def test_connect_service_description_disconnect_n_times():
 
 @hermes_testcase
 def test_connect_handshake_disconnect():
-    """Test connect, send ServiceDescription, wait for answer, disconnect."""
+    """
+    Test connect, send ServiceDescription, wait for answer, disconnect.
+
+    Contents of the ServiceDescription will be validated.
+    """
     with create_upstream_context() as ctxt:
         env = EnvironmentManager()
         ctxt.send_msg(env.service_description_message())
@@ -50,10 +60,12 @@ def test_connect_handshake_disconnect():
 
 @hermes_testcase
 def test_connect_2_times():
-    """Test that only one conenction will be accepted by the server,
-       any further connection attempts are rejected and Notification sent
-          * NotificationCode should be 2 (Connection refused)
-          * It's recommended that Severity should be 2 (Error)
+    """
+    Test that only one connection will be accepted by the server,
+    any further connection attempts should be rejected and Notification sent
+
+    * NotificationCode should be 2 (Connection refused)
+    * It's recommended that Severity should be 2 (Error)
     """
     env = EnvironmentManager()
     msg = None
@@ -61,7 +73,9 @@ def test_connect_2_times():
 
         with create_upstream_context() as ctxt2:
             msg = ctxt2.expect_message(Tag.NOTIFICATION)
-            message_validator.validate_notification(env, msg, NotificationCode.CONNECTION_REFUSED, SeverityType.ERROR)
+            message_validator.validate_notification(env, msg,
+                                                    NotificationCode.CONNECTION_REFUSED,
+                                                    SeverityType.ERROR)
 
         # verify that ctxt1 still works
         ctxt1.send_msg(env.service_description_message())
@@ -69,19 +83,25 @@ def test_connect_2_times():
 
 @hermes_testcase
 def test_unknown_attribute():
-    """Test that unknown attributes are ignored.
-       Success requires that the system under test responds with its own ServiceDescription.
+    """
+    Test that unknown attributes are ignored.
+    This will be done using a ServiceDescription message with an addition unknown attribute.
+
+    Success requires that the system under test responds with its own ServiceDescription.
     """
     _send_servicedescription_unknown_attribute()
 
 
 @hermes_testcase
 def test_maximum_message_size():
-    """Test maximum message size by sending a ServiceDescription message of max size.
-       Success requires that the system under test responds with its own ServiceDescription.
-       Side effects, this also test ability to handle
-          * a message spilt into multiple packets
-          * a message with an unknown attribute
+    """
+    Test maximum message size by sending a ServiceDescription message of max size.
+
+    Success requires that the system under test responds with its own ServiceDescription.
+    Side effects, this also test ability to handle
+
+    1. a message spilt into multiple packets
+    2. a message with an unknown attribute
     """
     _send_servicedescription_unknown_attribute(use_max_message_size=True)
 
@@ -108,10 +128,13 @@ def _send_servicedescription_unknown_attribute(use_max_message_size: bool=False)
 
 @hermes_testcase
 def test_multiple_messages_per_packet():
-    """Test sending multiple messages in one packet.
-       A ServiceDescription message is inserted between two CheckAlive messages
-       Success requires that the system under test responds with its own ServiceDescription.
-       (None of the CheckAlive messages should be answered.)
+    """
+    Test sending multiple messages in one packet.
+    A ServiceDescription message is inserted between two CheckAlive messages
+
+    Success requires that the system under test responds with its own ServiceDescription.
+
+    * None of the CheckAlive messages should be answered.
     """
     with create_upstream_context() as ctxt:
         env = EnvironmentManager()
@@ -126,10 +149,12 @@ def test_multiple_messages_per_packet():
 
 @hermes_testcase
 def test_terminate_on_wrong_message_in_not_available_not_ready():
-    """Test that connection is closed and reset when wrong messages are recieved
-       in state: NotAvailableNotReady
-       each sub-test start with handshake and ends with closing the connection
-       RevokeBoardAvailable & TransportFinished are not tested as they should never be sent
+    """
+    Test that connection is closed and reset when wrong messages are recieved
+    in state **NotAvailableNotReady**
+
+    Each sub-test start with handshake and ends with closing the connection.
+    RevokeBoardAvailable & TransportFinished are not tested as they should never be sent
     """
     env = EnvironmentManager()
     messages = [env.service_description_message(),
@@ -145,7 +170,9 @@ def test_terminate_on_wrong_message_in_not_available_not_ready():
             # now we expect a notification
             # callback has no purpose here, TestDriver responeds automatically
             notification = ctxt.expect_message(Tag.NOTIFICATION)
-            message_validator.validate_notification(env, notification, NotificationCode.PROTOCOL_ERROR, SeverityType.FATAL)
+            message_validator.validate_notification(env, notification,
+                                                    NotificationCode.PROTOCOL_ERROR,
+                                                    SeverityType.FATAL)
 
             # other end has to close connection so check if socked is dead now
             try:

@@ -3,6 +3,7 @@
 from contextlib import contextmanager
 import logging
 import inspect
+import re
 
 import pytest
 
@@ -38,7 +39,11 @@ def hermes_testcase(func):
     frame = inspect.stack()[1]
     module = inspect.getmodule(frame[0])
     module_name = module.__name__.rpartition('.')[-1]
-    _ALL_TEST_CASES[func_name] = [wrapper, module_name, func.__doc__]
+    # handle docstring indentation
+    doc = func.__doc__
+    if doc.startswith('\n'):
+        doc = re.sub(r"\n    ","\n", doc[5:])
+    _ALL_TEST_CASES[func_name] = [wrapper, module_name, doc]
     return wrapper
 
 def get_test_dictionary() -> dict:

@@ -17,7 +17,7 @@
             RstDocument:
                 id: test_info
                 base_font_size: 24
-                size_hint: (1, 1)
+                size_hint: (1, 4)
                 color: (0, 0, 0, 1)
                 background_color: (0.5, 0.9, 0.9, 1)
                 scroll_type: ['bars', 'content']
@@ -27,7 +27,7 @@
                 id: state_label
                 font_size: 24
                 bold: True
-                size_hint: (1, 0.2)
+                size_hint: (1, 1)
                 color: (0, 0, 0, 1)
                 background_color: (0.5, 0.5, 0.5, 1)
                 canvas.before:
@@ -37,33 +37,42 @@
                         size: self.size
                         pos: self.pos
 
+            ScrollView:
+                size_hint: (1, 3)
+                scroll_type: ['bars', 'content']
+                bar_width: 10
+                Label:
+                    id: instruction_label
+                    size_hint_y: None
+                    text_size: self.width, None
+                    height: self.texture_size[1]
+
             BoxLayout:
                 orientation: 'horizontal'
+                size_hint: (1, 1)
+                padding: 12
+
+                Button:
+                    id: img_upstream1
+                    text: "upstream"
                 Label:
+                    id: img_upstream2
                     text: ">"
                     size_hint: (0.1, 1)
-
-                BoxLayout:
-                    orientation: 'vertical'
-                    Label:
-                        id: instruction_label
-
-                    BoxLayout:
-                        orientation: 'horizontal'
-                        Button:
-                            text: "Yes"
-                            on_press: root.user_confirm(True)
-                        Button:
-                            text: "No"
-                            on_press: root.user_confirm(False)
-
+                Button:
+                    id: img_sut
+                    text: "System under test"
                 Label:
+                    id: img_downstream1
                     text: ">"
                     size_hint: (0.1, 1)
+                Button:
+                    id: img_downstream2
+                    text: "downstream"
 
 
             Button:
                 id: btn_run
                 text: "Run selected test cases"
-                size_hint: (1, 0.2)
+                size_hint: (1, 1)
                 on_press: root.run_selected_tests()

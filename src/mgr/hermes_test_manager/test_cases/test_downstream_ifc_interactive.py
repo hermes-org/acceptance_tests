@@ -26,13 +26,14 @@ def test_complete_board_transfer_from_sut():
 
 @hermes_testcase
 def test_complete_board_transfer_with_unknown_msg():
-    """Test a complete board transfer with an unknown message in the sequence.
-       the unknown message should be ignored and the sequence should continue.
-
-       It's not allowed to forward the unknown message to other systems,
-       this is tested in a separate test case.
     """
-    _complete_board_transfer_from_sut(True)
+    Test a complete board transfer with an unknown message in the sequence.
+    The unknown message should be ignored and the sequence should continue.
+
+    It's not allowed to forward the unknown message to other systems,
+    this is tested in a separate test case.
+    """
+    _complete_board_transfer_from_sut(send_unexpected_msg=True)
 
 
 def _complete_board_transfer_from_sut(send_unexpected_msg=False):

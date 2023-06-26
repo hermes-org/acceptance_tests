@@ -20,10 +20,11 @@ from ipc_hermes.messages import Tag, Message, TransferState
 
 @hermes_testcase
 def test_complete_mrba_board_transfer_to_sut():
-    """Test a complete board transfer to upstream port of system under test.
-       Starting with exchanging ServiceDescriptions.
+    """
+    Test a complete board transfer to upstream port of system under test.
+    Starting with exchanging ServiceDescriptions.
 
-       Sequence: MachineReady before BoardAvailable
+    Sequence: MachineReady before BoardAvailable
     """
     with create_downstream_context(handshake=True) as ctxt:
         env = EnvironmentManager()
@@ -50,10 +51,11 @@ def test_complete_mrba_board_transfer_to_sut():
 
 @hermes_testcase
 def test_complete_bamr_board_transfer_to_sut():
-    """Test a complete board transfer to upstream port of system under test.
-       Starting with exchanging ServiceDescriptions.
+    """
+    Test a complete board transfer to upstream port of system under test.
+    Starting with exchanging ServiceDescriptions.
 
-       Sequence: BoardAvailable before MachineReady
+    Sequence: BoardAvailable before MachineReady
     """
     with create_downstream_context(handshake=True) as ctxt:
         env = EnvironmentManager()
