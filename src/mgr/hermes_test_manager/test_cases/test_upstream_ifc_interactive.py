@@ -26,12 +26,32 @@ def test_complete_mrba_board_transfer_to_sut():
 
     Sequence: MachineReady before BoardAvailable
     """
+    _complete_bamr_board_transfer_to_sut()
+
+
+@hermes_testcase
+def test_complete_mrba_board_transfer_to_sut_with_unknown_msg():
+    """
+    Test a complete board transfer with an unknown message in the sequence.
+    The unknown message should be ignored and the sequence should continue.
+
+    It's not allowed to forward the unknown message to other systems,
+    this is tested in a separate test case.
+    """
+    _complete_bamr_board_transfer_to_sut(send_unexpected_msg=True)
+
+
+def _complete_bamr_board_transfer_to_sut(send_unexpected_msg=False):
     with create_downstream_context(handshake=True) as ctxt:
         env = EnvironmentManager()
 
         # ask for external agent to signal machine ready
         env.run_callback(CbEvt.WAIT_FOR_MSG, tag=Tag.MACHINE_READY)
         ctxt.expect_message(Tag.MACHINE_READY)
+
+        if send_unexpected_msg:
+            unknown_msg_bytes = b"<Hermes Timestamp='2020-04-28T10:01:20.768'><ThisIsFirstUnknown /></Hermes>"
+            ctxt.send_tag_and_bytes(None, unknown_msg_bytes)
 
         # signal that we are ready to send board
         board_id = str(uuid.uuid4())
@@ -40,6 +60,10 @@ def test_complete_mrba_board_transfer_to_sut():
         # ask for external agent to signal start transport
         env.run_callback(CbEvt.WAIT_FOR_MSG, tag=Tag.START_TRANSPORT)
         ctxt.expect_message(Tag.START_TRANSPORT)
+
+        if send_unexpected_msg:
+            unknown_msg_bytes = b"<Hermes Timestamp='2020-04-28T10:01:20.768'><ThisIsSecondUnknown /></Hermes>"
+            ctxt.send_tag_and_bytes(None, unknown_msg_bytes)
 
         # signal that transport is finished
         ctxt.send_msg(Message.TransportFinished(TransferState.COMPLETE, board_id))
