@@ -56,23 +56,15 @@ class Hitmanager(Widget):
             self.ids.test_info.text = rst_text
             # update graphic
             if 'upstream' in test_info.module:
-                self.ids.img_upstream1.disabled = False
-                self.ids.img_upstream2.disabled = False
                 self.ids.img_upstream1.opacity = 1
                 self.ids.img_upstream2.opacity = 1
             else:
-                self.ids.img_upstream1.disabled = True
-                self.ids.img_upstream2.disabled = True
                 self.ids.img_upstream1.opacity = 0
                 self.ids.img_upstream2.opacity = 0
             if 'downstream' in test_info.module:
-                self.ids.img_downstream1.disabled = False
-                self.ids.img_downstream2.disabled = False
                 self.ids.img_downstream1.opacity = 1
                 self.ids.img_downstream2.opacity = 1
             else:
-                self.ids.img_downstream1.disabled = True
-                self.ids.img_downstream2.disabled = True
                 self.ids.img_downstream1.opacity = 0
                 self.ids.img_downstream2.opacity = 0
         return True
