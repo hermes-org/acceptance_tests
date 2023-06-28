@@ -26,7 +26,7 @@ def test_complete_mrba_board_transfer_to_sut():
 
     Sequence: MachineReady before BoardAvailable
     """
-    _complete_bamr_board_transfer_to_sut()
+    complete_bamr_board_transfer_to_sut()
 
 
 @hermes_testcase
@@ -38,10 +38,14 @@ def test_complete_mrba_board_transfer_to_sut_with_unknown_msg():
     It's not allowed to forward the unknown message to other systems,
     this is tested in a separate test case.
     """
-    _complete_bamr_board_transfer_to_sut(send_unexpected_msg=True)
+    complete_bamr_board_transfer_to_sut(send_unexpected_msg=True)
 
 
-def _complete_bamr_board_transfer_to_sut(send_unexpected_msg=False):
+def complete_bamr_board_transfer_to_sut(send_unexpected_msg=False):
+    """
+    Actual test code for complete board transfer to upstream port of system under test.
+    Returns the board id and the BoardAvailable message for end-2-end testing.
+    """
     with create_downstream_context(handshake=True) as ctxt:
         env = EnvironmentManager()
 
@@ -55,7 +59,8 @@ def _complete_bamr_board_transfer_to_sut(send_unexpected_msg=False):
 
         # signal that we are ready to send board
         board_id = str(uuid.uuid4())
-        ctxt.send_msg(Message.BoardAvailable(board_id, env.machine_id))
+        boardavailable_message = Message.BoardAvailable(board_id, env.machine_id)
+        ctxt.send_msg(boardavailable_message)
 
         # ask for external agent to signal start transport
         env.run_callback(CbEvt.WAIT_FOR_MSG, tag=Tag.START_TRANSPORT)
@@ -71,6 +76,7 @@ def _complete_bamr_board_transfer_to_sut(send_unexpected_msg=False):
         # ask for external agent to send board and signal stop transport
         env.run_callback(CbEvt.WAIT_FOR_MSG, tag=Tag.STOP_TRANSPORT)
         ctxt.expect_message(Tag.STOP_TRANSPORT)
+        return (board_id, boardavailable_message)
 
 
 @hermes_testcase

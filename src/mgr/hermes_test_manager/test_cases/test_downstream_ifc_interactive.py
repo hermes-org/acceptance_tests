@@ -21,7 +21,7 @@ from ipc_hermes.messages import Tag, Message, TransferState
 @hermes_testcase
 def test_complete_board_transfer_from_sut():
     """Test a complete board transfer. Starting with exchanging ServiceDescriptions."""
-    _complete_board_transfer_from_sut()
+    complete_board_transfer_from_sut()
 
 
 @hermes_testcase
@@ -33,11 +33,14 @@ def test_complete_board_transfer_with_unknown_msg():
     It's not allowed to forward the unknown message to other systems,
     this is tested in a separate test case.
     """
-    _complete_board_transfer_from_sut(send_unexpected_msg=True)
+    complete_board_transfer_from_sut(send_unexpected_msg=True)
 
 
-def _complete_board_transfer_from_sut(send_unexpected_msg=False):
-    """Test a complete board transfer. Starting with exchanging ServiceDescriptions."""
+def complete_board_transfer_from_sut(send_unexpected_msg=False):
+    """
+    Actual test code for complete board transfer from downstream port of system under test.
+    Returns the board id and the BoardAvailable message for end-2-end testing.
+    """
     with create_upstream_context(handshake=True) as ctxt:
         env = EnvironmentManager()
         # signal that we are ready to receive board
@@ -67,3 +70,4 @@ def _complete_board_transfer_from_sut(send_unexpected_msg=False):
             ctxt.send_tag_and_bytes(None, unknown_msg_bytes)
 
         ctxt.send_msg(Message.StopTransport(TransferState.COMPLETE, board_id))
+        return (board_id, msg_board_available)
