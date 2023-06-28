@@ -238,7 +238,7 @@ def create_downstream_context(handshake: bool=False):
     connection.strict_send_protocol = False
     env = EnvironmentManager()
     try:
-        connection.connect('localhost', env.test_manager_port)
+        connection.connect('localhost', int(env.test_manager_port))
         client_address = connection.wait_for_connection(10)
         env.run_callback(CbEvt.CLIENT_CONNECTED, address=client_address)
         if handshake:

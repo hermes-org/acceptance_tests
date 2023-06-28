@@ -1,6 +1,9 @@
 ﻿### Application logs ###
 *.log
 
+### Application ini file ###
+src/config.ini
+
 ### Python ###
 __pycache__/
 .pytest_cache/

@@ -89,11 +89,13 @@ def system_under_test_address(host:str, port:str|int):
     env = EnvironmentManager()
     env.system_under_test_host = host
     env.system_under_test_port = port
+    log.debug("System under test: %s:%s", host, port)
 
 def testmanager_listening_port(port:str|int):
     """Set the IP port of the test manager."""
     env = EnvironmentManager()
     env.test_manager_port = port
+    log.debug("Test manager listening port: %s", port)
 
 def setup_default_logging(filename: str, level=logging.INFO, extra_loggers: list=None) -> None:
     """Optional setup of logging to file."""
