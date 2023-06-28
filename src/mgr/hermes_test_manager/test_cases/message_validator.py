@@ -127,12 +127,17 @@ def _validate_mandatory_enum(_: EnvironmentManager, msg: Message,
     return int(field_value)
 
 
-def _validate_barcode(_: EnvironmentManager, msg: Message, barcode_type: str):
+def _validate_barcode(env: EnvironmentManager, msg: Message, barcode_type: str):
     """Validate an optional barcode arg in a received message."""
     barcode = msg.data.get(barcode_type)
     if barcode is None:
         return
-    # TODO: what to validate? warn against empty string? warn against "Read Error"?
+    if len(barcode.strip()) == 0:
+        env.run_callback(CbEvt.WARNING,
+                         text = f"Barcode {barcode_type} in board info is empty string")
+    if 'error' in barcode.lower():
+        env.run_callback(CbEvt.WARNING,
+                         text = f"Barcode {barcode_type} in board info has text 'error' in it")
 
 
 def _validate_float(env: EnvironmentManager, msg: Message, field_name: str,
