@@ -11,6 +11,7 @@ sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 # pylint: disable=wrong-import-position
 from test_cases import get_test_dictionary
 from test_cases import EnvironmentManager
+from callback_tags import CbEvt
 
 # imports are needed to locate available tests but not used directly by API
 # pylint: disable=unused-import
@@ -74,8 +75,8 @@ def run_test(testcase: str, callback=None, verbose=False) -> bool:
             log.info("Start %s.%s...", test_data[1], testcase)
             func()
         except Exception as exc: # pylint: disable=broad-except
-            print(f"FAILED with error: {str(exc)}")
             log.error("Failed: %s, %s", testcase, exc)
+            env.run_callback(CbEvt.ERROR, text=str(exc))
             return False
         else:
             log.info("Passed: %s", testcase)

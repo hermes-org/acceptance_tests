@@ -14,3 +14,4 @@ class CbEvt(Enum):
     HERMES_VERSION = 5
     CLIENT_CONNECTED = 6
     WARNING = 7
+    ERROR = 8

@@ -101,6 +101,8 @@ class EnvironmentManager():
             case CbEvt.WARNING:
                 self._log.warning(text)
                 text = f"Warning: {text}"
+            case CbEvt.ERROR:
+                text = f"Error: {text}"
         from_func = inspect.stack()[1].function
 
         if self._callback is None:
