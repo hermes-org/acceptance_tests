@@ -50,7 +50,7 @@ def _complete_board_transfer_from_sut(send_unexpected_msg=False):
         board_id = msg_board_available.data.get('BoardId')
 
         if send_unexpected_msg:
-            unknown_msg_bytes = b"<Hermes Timestamp='2020-04-28T10:01:20.768'><ThisIsUnknownMessage /></Hermes>"
+            unknown_msg_bytes = b"<Hermes Timestamp='2020-04-28T10:01:20.768'><ThisIsFirstUnknown /></Hermes>"
             ctxt.send_tag_and_bytes(None, unknown_msg_bytes)
 
         # signal that transport can start
@@ -61,5 +61,9 @@ def _complete_board_transfer_from_sut(send_unexpected_msg=False):
         transport_finished = ctxt.expect_message(Tag.TRANSPORT_FINISHED)
         board_id2 = transport_finished.data.get('BoardId')
         assert board_id == board_id2
+
+        if send_unexpected_msg:
+            unknown_msg_bytes = b"<Hermes Timestamp='2020-04-28T10:01:20.768'><ThisIsSecondUnknown /></Hermes>"
+            ctxt.send_tag_and_bytes(None, unknown_msg_bytes)
 
         ctxt.send_msg(Message.StopTransport(TransferState.COMPLETE, board_id))
