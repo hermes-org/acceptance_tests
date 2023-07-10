@@ -22,5 +22,5 @@ Conda environment for running the code is included. Before running the code for 
 * navigate into the src directory 
 * execute "pyinstaller main.spec -y"
 
-This should generate the directory "./dist/HermesTest/" with an executeable "HermesTest.exe"
+This should generate the directory "./src/dist/HermesAcceptanceTests/" with an executeable "HermesAcceptanceTests.exe"
 
