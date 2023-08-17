@@ -15,3 +15,12 @@ Some test cases can also be executed using pytest e.g., inside Visual Studio Cod
 
 Conda environment for running the code is included. Before running the code for the first time, run the following command to create a new environment if you're using any Conda such as Anaconda
 "conda env create -f hermes_github.yaml"
+
+### Generating an Executeable 
+
+* install pyinstaller e.g. via pip install pyinstaller
+* navigate into the src directory 
+* execute "pyinstaller main.spec -y"
+
+This should generate the directory "./src/dist/HermesAcceptanceTests/" with an executeable "HermesAcceptanceTests.exe"
+
