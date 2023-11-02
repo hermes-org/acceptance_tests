@@ -1,4 +1,5 @@
-#:kivy 1.0.9
+#:kivy 2.0.0
+#:import ScrollEffect kivy.effects.scroll.ScrollEffect
 
 <Hitmanager>:
     BoxLayout:
@@ -7,9 +8,15 @@
         padding: 8
         spacing: 8
 
-        TreeView:
-            id: testlist_tv
-            hide_root: True
+        ScrollView:
+            bar_width: 10
+            effect_cls: ScrollEffect
+            scroll_type: ['bars', 'content']
+            TreeView:
+                id: testlist_tv
+                size_hint_y: None
+                height: self.minimum_height
+                hide_root: True
 
         BoxLayout:
             orientation: 'vertical'
@@ -39,8 +46,9 @@
 
             ScrollView:
                 size_hint: (1, 3)
-                scroll_type: ['bars', 'content']
                 bar_width: 10
+                effect_cls: ScrollEffect
+                scroll_type: ['bars', 'content']
                 Label:
                     id: instruction_label
                     size_hint_y: None
