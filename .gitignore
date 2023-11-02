@@ -8,6 +8,10 @@ src/config.ini
 __pycache__/
 .pytest_cache/
 
+### pyinstaller ###
+src/build/
+src/dist/
+
 ### VisualStudio ###
 /.vs/auto_tests/v16/.suo
 

@@ -1,13 +1,14 @@
 """Starts the IPC Hermes 9852 test system in GUI mode, no build necessary."""
 
 import os
+import sys
 import logging
 import configparser
 
-import sys
 sys.path.append('app/')
 sys.path.append('mgr/')
- # pylint: disable=import-error
+
+# pylint: disable=import-error, wrong-import-position
 from hitmanager import HitmanagerApp
 from hermes_test_manager import hermes_test_api
 
