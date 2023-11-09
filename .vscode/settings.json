@@ -7,4 +7,8 @@
     "python.linting.pylintEnabled": true,
     "python.linting.enabled": true,
     "jupyter.notebookFileRoot": "${workspaceFolder}/src/mgr/hermes_test_manager",
+    "python.analysis.extraPaths": [
+        "./src/mgr",
+        "./src/app"
+    ],
 }

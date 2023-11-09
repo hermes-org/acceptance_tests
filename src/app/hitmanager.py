@@ -8,9 +8,9 @@ from kivy.clock import Clock
 from kivy.uix.widget import Widget
 
 # pylint: disable=import-error
-from widgets.icon_treenode import TreeViewImageLabel
-from hermes_test_manager import hermes_test_api
-from hermes_test_manager.callback_tags import CbEvt
+from app.widgets.icon_treenode import TreeViewImageLabel
+from mgr.hermes_test_manager import hermes_test_api
+from mgr.hermes_test_manager.callback_tags import CbEvt
 
 class Hitmanager(Widget):
     """Main widget for HitManager. So far just one window

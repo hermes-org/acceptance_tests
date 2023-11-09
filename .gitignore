@@ -2,7 +2,7 @@
 *.log
 
 ### Application ini file ###
-src/config.ini
+config.ini
 
 ### Python ###
 __pycache__/
@@ -22,4 +22,7 @@ src/dist/
 !.vscode/launch.json
 !.vscode/extensions.json
 
+### Build ###
+build/
+*.egg-info/
 

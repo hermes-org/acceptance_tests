@@ -9,8 +9,8 @@ sys.path.append('app/')
 sys.path.append('mgr/')
 
 # pylint: disable=import-error, wrong-import-position
-from hitmanager import HitmanagerApp
-from hermes_test_manager import hermes_test_api
+from app.hitmanager import HitmanagerApp
+from mgr.hermes_test_manager import hermes_test_api
 
 LOG_FILE = "hitmanager.log"
 INI_FILE = "config.ini"
