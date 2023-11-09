@@ -11,8 +11,17 @@ Project consists of
 * mgr/hermes_test_manager/ipc_hermes - the IPC-9852 Hermes implementation used
 * mgr/hermes_test_manager/test_cases - the actual test cases
 
-Some test cases can also be executed using pytest e.g., inside Visual Studio Code or from command line 
+Some test cases can also be executed using pytest e.g., inside Visual Studio Code or from command line
 
+Using Python
+Create the environment with Python (Ctrl+Alt+P) and then install kivy, pytest and the propietary modules by opening a terminal and typing:
+pip install kivy
+pip install pytest
+pip install .
+
+--- or ----
+
+Using Anaconda
 Conda environment for running the code is included. Before running the code for the first time, run the following command to create a new environment if you're using any Conda such as Anaconda
 "conda env create -f hermes_github.yaml"
 
